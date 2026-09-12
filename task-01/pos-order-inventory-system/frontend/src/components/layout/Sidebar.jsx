@@ -15,8 +15,8 @@ import { useApp } from '../../context/AppContext';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { name: 'Inventory', href: '/inventory', icon: Boxes },
   { name: 'POS Register', href: '/register', icon: ShoppingCart, badge: 'Soon' },
-  { name: 'Inventory', href: '/inventory', icon: Boxes, badge: 'Soon' },
   { name: 'Orders', href: '/orders', icon: Receipt, badge: 'Soon' },
   { name: 'Reports', href: '/reports', icon: BarChart3, badge: 'Soon' },
   { name: 'Settings', href: '/settings', icon: Settings },

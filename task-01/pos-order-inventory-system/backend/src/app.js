@@ -68,6 +68,8 @@ app.get('/', (req, res) => {
 });
 
 // 8. Mount Centralized API Routes
+const productRoutes = require('./routes/product.routes');
+app.use('/api/products', productRoutes);
 app.use('/api/v1', apiRoutes);
 
 // 9. 404 Route Not Found Handler

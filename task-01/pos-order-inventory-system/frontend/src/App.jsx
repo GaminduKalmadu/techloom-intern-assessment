@@ -4,6 +4,7 @@ import { AppProvider } from './context/AppContext';
 import ErrorBoundary from './pages/ErrorPage';
 import AppLayout from './components/layout/AppLayout';
 import Dashboard from './pages/Dashboard';
+import Inventory from './pages/Inventory';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -14,7 +15,7 @@ function App() {
           <Routes>
             <Route path="/" element={<AppLayout />}>
               <Route index element={<Dashboard />} />
-              {/* Future feature route placeholders */}
+              <Route path="inventory" element={<Inventory />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
