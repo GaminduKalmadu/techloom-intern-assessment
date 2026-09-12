@@ -35,8 +35,16 @@ class ApiError extends Error {
     return new ApiError(404, message);
   }
 
-  static conflict(message = 'Resource conflict') {
+  static conflict(message = 'Resource conflict or duplicate entry') {
     return new ApiError(409, message);
+  }
+
+  static unprocessable(message = 'Unprocessable entity', errors = null) {
+    return new ApiError(422, message, errors);
+  }
+
+  static tooManyRequests(message = 'Too many requests, please slow down') {
+    return new ApiError(429, message);
   }
 
   static internal(message = 'Internal Server Error') {
