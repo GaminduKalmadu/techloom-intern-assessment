@@ -3,6 +3,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const env = require('./config/env');
 const httpLogger = require('./middleware/logger.middleware');
+const sanitizeInput = require('./middleware/sanitize.middleware');
 const { apiLimiter } = require('./middleware/rateLimiter');
 const { notFoundHandler, errorHandler } = require('./middleware/error.middleware');
 const apiRoutes = require('./routes');
@@ -17,17 +18,25 @@ app.use(
   })
 );
 
-// 2. CORS Configuration
+// 2. CORS Whitelist Configuration
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
+    // Allow non-browser requests (e.g. server-to-server, curl, mobile tools)
     if (!origin) return callback(null, true);
-    
-    // In development allow any localhost or matching CORS_ORIGIN
-    if (env.isDevelopment || origin === env.CORS_ORIGIN) {
+
+    // Development allows any localhost or configured whitelist origins
+    if (env.isDevelopment) {
+      if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:') || env.CORS_WHITELIST.includes(origin)) {
+        return callback(null, true);
+      }
+    }
+
+    // Production checks strict CORS whitelist
+    if (env.CORS_WHITELIST.includes(origin)) {
       return callback(null, true);
     }
-    return callback(new Error(`Origin ${origin} not allowed by CORS policy`));
+
+    return callback(new Error(`Origin ${origin} is blocked by CORS security whitelist`));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -35,17 +44,20 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// 3. Request Body Parsers
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// 3. Request Body Parsers (with safe payload size limits)
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
-// 4. HTTP Request Logging
+// 4. Input Sanitization (NoSQL injection prevention & input trimming)
+app.use(sanitizeInput);
+
+// 5. HTTP Request Logging via Morgan & Winston
 app.use(httpLogger);
 
-// 5. Rate Limiting for all API requests
+// 6. Global API Rate Limiting
 app.use('/api', apiLimiter);
 
-// 6. Base Root Route
+// 7. Root Health / Info Endpoint
 app.get('/', (req, res) => {
   res.status(200).json({
     name: 'POS Order & Inventory System API',
@@ -55,13 +67,13 @@ app.get('/', (req, res) => {
   });
 });
 
-// 7. Mount API v1 Routes
+// 8. Mount Centralized API Routes
 app.use('/api/v1', apiRoutes);
 
-// 8. Handle 404 Not Found
+// 9. 404 Route Not Found Handler
 app.use(notFoundHandler);
 
-// 9. Central Error Handler
+// 10. Central Error Handler
 app.use(errorHandler);
 
 module.exports = app;
