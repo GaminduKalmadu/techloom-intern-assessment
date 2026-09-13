@@ -2,8 +2,8 @@ const crypto = require('crypto');
 const Order = require('../models/order.model');
 const Product = require('../models/product.model');
 const Cart = require('../models/cart.model');
+const Reservation = require('../models/reservation.model');
 const reservationService = require('./reservation.service');
-const env = require('../config/env');
 const ApiError = require('../utils/apiError');
 
 /**
@@ -100,6 +100,7 @@ const createOrder = async ({ userId = null, items = null, notes = '', fromCart =
   const order = new Order({
     orderNumber,
     userId,
+    sourceCartId: activeCartDoc?._id || null,
     items: orderItems,
     totalAmount: calculatedTotal,
     status: 'PENDING',
@@ -107,7 +108,23 @@ const createOrder = async ({ userId = null, items = null, notes = '', fromCart =
     notes,
   });
 
-  await order.save();
+  try {
+    await order.save();
+  } catch (error) {
+    if (error.code === 11000 && activeCartDoc) {
+      const existingOrder = await Order.findOne({ sourceCartId: activeCartDoc._id });
+      if (existingOrder) {
+        const existingReservation = await Reservation.findOne({
+          orderId: existingOrder._id,
+          status: { $in: ['reserved', 'ACTIVE'] },
+        }).sort({ expiresAt: 1 });
+        const plainExistingOrder = existingOrder.toObject();
+        plainExistingOrder.reservationExpiresAt = existingReservation?.expiresAt || null;
+        return plainExistingOrder;
+      }
+    }
+    throw error;
+  }
 
   try {
     // Atomically reserve inventory items
@@ -126,7 +143,8 @@ const createOrder = async ({ userId = null, items = null, notes = '', fromCart =
     }
 
     const plainOrder = order.toObject();
-    plainOrder.reservationExpiresAt = new Date(Date.now() + env.RESERVATION_TTL_MINUTES * 60 * 1000);
+    const reservation = await Reservation.findOne({ orderId: order._id }).sort({ expiresAt: 1 });
+    plainOrder.reservationExpiresAt = reservation?.expiresAt || null;
     return plainOrder;
   } catch (error) {
     // If reservation fails, update order status to FAILED
@@ -145,7 +163,11 @@ const getOrderById = async (id) => {
   if (!order) {
     throw ApiError.notFound(`Order not found with ID ${id}`);
   }
-  return order;
+  const plainOrder = order.toObject();
+  const reservation = await Reservation.findOne({ orderId: order._id }).sort({ expiresAt: 1 });
+  plainOrder.reservationExpiresAt = reservation?.expiresAt || null;
+  plainOrder.reservationStatus = reservation?.status || null;
+  return plainOrder;
 };
 
 /**
@@ -197,37 +219,6 @@ const getOrders = async (filters = {}) => {
 };
 
 /**
- * Mark order as PAID and confirm reservations
- */
-const payOrder = async (orderId, paymentData = {}) => {
-  const order = await Order.findById(orderId);
-  if (!order) {
-    throw ApiError.notFound('Order not found');
-  }
-
-  const currentStatus = (order.status || '').toUpperCase();
-  if (currentStatus === 'PAID') {
-    return order;
-  }
-
-  if (['FAILED', 'CANCELLED', 'EXPIRED'].includes(currentStatus)) {
-    throw ApiError.badRequest(`Cannot pay an order with status ${currentStatus}`);
-  }
-
-  // Confirm inventory reservations
-  await reservationService.confirmReservations(orderId);
-
-  order.status = 'PAID';
-  order.paymentStatus = 'paid';
-  if (paymentData.notes) {
-    order.notes = `${order.notes} [Payment: ${paymentData.notes}]`.trim();
-  }
-
-  await order.save();
-  return order;
-};
-
-/**
  * Cancel an order and release reserved stock
  */
 const cancelOrder = async (orderId, reason = 'Cancelled by user') => {
@@ -237,7 +228,7 @@ const cancelOrder = async (orderId, reason = 'Cancelled by user') => {
   }
 
   const currentStatus = (order.status || '').toUpperCase();
-  if (['PAID', 'CANCELLED', 'EXPIRED', 'FAILED'].includes(currentStatus)) {
+  if (['CANCELLED', 'EXPIRED', 'FAILED'].includes(currentStatus)) {
     throw ApiError.badRequest(`Cannot cancel an order that is already ${currentStatus}`);
   }
 
@@ -245,8 +236,11 @@ const cancelOrder = async (orderId, reason = 'Cancelled by user') => {
   order.notes = `${order.notes} [Cancelled: ${reason}]`.trim();
   await order.save();
 
-  // Release inventory reservations
-  await reservationService.releaseReservations(orderId);
+  // Only an unpaid reservation returns stock. PAID -> CANCELLED is an allowed
+  // state transition, but fulfillment stock remains consumed.
+  if (currentStatus === 'RESERVED') {
+    await reservationService.releaseReservations(orderId);
+  }
 
   return order;
 };
@@ -257,6 +251,5 @@ module.exports = {
   getOrderById,
   getOrderByNumber,
   getOrders,
-  payOrder,
   cancelOrder,
 };

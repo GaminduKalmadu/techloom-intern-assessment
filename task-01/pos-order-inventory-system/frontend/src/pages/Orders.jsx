@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Receipt,
   Search,
@@ -25,6 +25,7 @@ import ErrorAlert from '../components/common/ErrorAlert';
 const STATUS_FILTERS = ['ALL', 'RESERVED', 'PAID', 'PENDING', 'CANCELLED', 'FAILED', 'EXPIRED'];
 
 const Orders = () => {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -55,23 +56,6 @@ const Orders = () => {
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
-
-  const handlePay = async (orderId) => {
-    try {
-      setActionLoading(true);
-      const res = await orderService.payOrder(orderId, { notes: 'Paid at POS terminal' });
-      if (res && res.success) {
-        fetchOrders();
-        if (selectedOrder && selectedOrder._id === orderId) {
-          setSelectedOrder(res.data);
-        }
-      }
-    } catch (err) {
-      alert(err.message || 'Payment failed');
-    } finally {
-      setActionLoading(false);
-    }
-  };
 
   const handleCancel = async (orderId) => {
     if (!window.confirm('Are you sure you want to cancel this order and release reserved stock?')) {
@@ -267,7 +251,7 @@ const Orders = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handlePay(o._id)}
+                              onClick={() => navigate(`/payment/${o._id}`, { state: { order: o } })}
                               disabled={actionLoading}
                               className="text-emerald-600 hover:bg-emerald-50 border-emerald-200"
                             >

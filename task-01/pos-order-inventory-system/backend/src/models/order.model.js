@@ -45,6 +45,11 @@ const orderSchema = new mongoose.Schema(
       ref: 'User',
       default: null, // Null indicates walk-in customer at POS
     },
+    sourceCartId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Cart',
+      default: null,
+    },
     items: {
       type: [orderItemSchema],
       validate: {
@@ -96,6 +101,10 @@ const orderSchema = new mongoose.Schema(
 orderSchema.index({ status: 1, createdAt: -1 });
 orderSchema.index({ userId: 1, createdAt: -1 });
 orderSchema.index({ createdAt: -1 });
+orderSchema.index(
+  { sourceCartId: 1 },
+  { unique: true, partialFilterExpression: { sourceCartId: { $type: 'objectId' } } }
+);
 
 const Order = mongoose.model('Order', orderSchema);
 

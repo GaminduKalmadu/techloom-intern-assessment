@@ -6,11 +6,12 @@ class ApiError extends Error {
    * @param {boolean} isOperational - True if expected operational error
    * @param {string} stack - Optional stack trace
    */
-  constructor(statusCode, message, errors = null, isOperational = true, stack = '') {
+  constructor(statusCode, message, errors = null, isOperational = true, stack = '', code = null) {
     super(message);
     this.statusCode = statusCode;
     this.errors = errors;
     this.isOperational = isOperational;
+    this.code = code;
 
     if (stack) {
       this.stack = stack;
@@ -37,6 +38,10 @@ class ApiError extends Error {
 
   static conflict(message = 'Resource conflict or duplicate entry') {
     return new ApiError(409, message);
+  }
+
+  static coded(statusCode, code, message, errors = null) {
+    return new ApiError(statusCode, message, errors, true, '', code);
   }
 
   static unprocessable(message = 'Unprocessable entity', errors = null) {

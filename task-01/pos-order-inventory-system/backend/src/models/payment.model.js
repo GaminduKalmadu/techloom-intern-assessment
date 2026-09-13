@@ -28,18 +28,20 @@ const paymentSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ['cash', 'card', 'digital_wallet'],
-      default: 'cash',
+      enum: ['CARD', 'CASH', 'DIGITAL_WALLET'],
+      default: 'CARD',
     },
     status: {
       type: String,
-      enum: ['pending', 'completed', 'failed', 'refunded'],
-      default: 'pending',
+      enum: ['PENDING', 'SUCCESS', 'FAILED', 'TIMEOUT'],
+      default: 'PENDING',
       index: true,
     },
-    metadata: {
-      type: mongoose.Schema.Types.Mixed,
-      default: {},
+    idempotencyKey: {
+      type: String,
+      required: [true, 'Idempotency key is required'],
+      trim: true,
+      maxlength: 200,
     },
   },
   {
@@ -49,6 +51,12 @@ const paymentSchema = new mongoose.Schema(
 
 // Compound indexes
 paymentSchema.index({ status: 1, createdAt: -1 });
+paymentSchema.index({ idempotencyKey: 1 }, { unique: true, sparse: true });
+// MongoDB enforces the invariant even if two app instances race.
+paymentSchema.index(
+  { orderId: 1 },
+  { unique: true, partialFilterExpression: { status: 'SUCCESS' }, name: 'one_success_per_order' }
+);
 
 const Payment = mongoose.model('Payment', paymentSchema);
 

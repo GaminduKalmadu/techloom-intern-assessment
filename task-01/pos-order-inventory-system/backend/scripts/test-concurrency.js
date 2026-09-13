@@ -16,6 +16,7 @@ const { connectDB } = require('../src/config/db');
 const Product = require('../src/models/product.model');
 const Order = require('../src/models/order.model');
 const Reservation = require('../src/models/reservation.model');
+const Payment = require('../src/models/payment.model');
 const orderService = require('../src/services/order.service');
 const reservationService = require('../src/services/reservation.service');
 
@@ -206,6 +207,7 @@ const runConcurrencyTest = async () => {
     console.log('\nCleaning up test artifacts from database...');
     await Product.findByIdAndDelete(testProduct._id);
     await Reservation.deleteMany({ productId: testProduct._id });
+    await Payment.deleteMany({ orderId: { $in: successfulOrders.map((o) => o.orderId) } });
     await Order.deleteMany({ notes: /Concurrent test buyer/ });
     console.log(' Cleanup completed.');
 

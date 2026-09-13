@@ -10,6 +10,8 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
 import NotFound from './pages/NotFound';
+import Payment from './pages/Payment';
+import AdminPayments from './pages/AdminPayments';
 
 function App() {
   return (
@@ -24,7 +26,9 @@ function App() {
                 <Route path="cart" element={<Cart />} />
                 <Route path="register" element={<Cart />} />
                 <Route path="checkout" element={<Checkout />} />
+                <Route path="payment/:orderId" element={<Payment />} />
                 <Route path="orders" element={<Orders />} />
+                <Route path="admin/payments" element={<AdminPayments />} />
                 <Route path="*" element={<NotFound />} />
               </Route>
             </Routes>

@@ -93,9 +93,8 @@ const Checkout = () => {
       });
 
       if (res && res.success && res.data) {
-        setCreatedOrder(res.data);
-        setSecondsRemaining(900); // 15 minutes TTL
         await refreshCart(); // Cart has been converted to active order
+        navigate(`/payment/${res.data._id}`, { state: { order: res.data } });
       } else {
         throw new Error(res?.message || 'Failed to create order');
       }
@@ -112,20 +111,7 @@ const Checkout = () => {
   // 2. Pay Order (Transition RESERVED -> PAID)
   const handlePayOrder = async () => {
     if (!createdOrder) return;
-    try {
-      setPayingOrder(true);
-      setCheckoutError(null);
-      const res = await orderService.payOrder(createdOrder._id, {
-        notes: `Paid via ${paymentMethod.replace('_', ' ').toUpperCase()}`,
-      });
-      if (res && res.success && res.data) {
-        setCreatedOrder(res.data);
-      }
-    } catch (err) {
-      setCheckoutError(err.message || 'Payment processing failed');
-    } finally {
-      setPayingOrder(false);
-    }
+    navigate(`/payment/${createdOrder._id}`, { state: { order: createdOrder } });
   };
 
   // 3. Cancel Order (Transition RESERVED -> CANCELLED, releases inventory)
