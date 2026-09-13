@@ -15,77 +15,120 @@ const generateOrderNumber = () => {
 
 /**
  * Create a new order with atomic stock reservation
+ * Business Logic:
+ * 1. Validate cart
+ * 2. Check product availability
+ * 3. Calculate total
+ * 4. Create order
+ *
  * @param {object} params
  * @param {string|null} params.userId - Optional registered user or null for walk-in
- * @param {Array<{ productId: string, quantity: number }>} params.items - Items to order
+ * @param {Array<{ productId: string, quantity: number }>} [params.items] - Items to order (if not from active cart)
  * @param {string} [params.notes] - Order notes
- * @param {boolean} [params.fromCart] - If true, mark user's cart as converted
+ * @param {boolean} [params.fromCart] - If true, pull from user's active cart and convert it
  */
-const createOrder = async ({ userId = null, items, notes = '', fromCart = false }) => {
-  if (!items || items.length === 0) {
-    throw ApiError.badRequest('Cannot create an order without items');
+const createOrder = async ({ userId = null, items = null, notes = '', fromCart = false }) => {
+  let orderItemsToProcess = items;
+  let activeCartDoc = null;
+
+  // 1. Validate cart
+  if (fromCart || (!items && userId)) {
+    activeCartDoc = await Cart.findOne({ userId, status: 'active' });
+    if (!activeCartDoc || !activeCartDoc.items || activeCartDoc.items.length === 0) {
+      throw ApiError.badRequest('Cannot create an order: Active cart is empty. Please add items to cart first.');
+    }
+    orderItemsToProcess = activeCartDoc.items.map((item) => ({
+      productId: (item.productId && item.productId._id) ? item.productId._id.toString() : item.productId.toString(),
+      quantity: item.quantity,
+    }));
   }
 
-  // 1. Fetch current product information and construct order items snapshot
-  const productIds = items.map((i) => i.productId);
+  if (!orderItemsToProcess || !Array.isArray(orderItemsToProcess) || orderItemsToProcess.length === 0) {
+    throw ApiError.badRequest('Cannot create an order: At least one item is required');
+  }
+
+  // 2. Check product availability
+  const productIds = orderItemsToProcess.map((i) => i.productId);
   const products = await Product.find({ _id: { $in: productIds } });
   const productMap = new Map(products.map((p) => [p._id.toString(), p]));
 
-  let calculatedTotal = 0;
-  const orderItems = [];
-
-  for (const item of items) {
+  for (const item of orderItemsToProcess) {
     const product = productMap.get(item.productId.toString());
     if (!product) {
-      throw ApiError.notFound(`Product not found with ID ${item.productId}`);
+      throw ApiError.notFound(`Product not found with ID: ${item.productId}`);
     }
 
-    if (item.quantity <= 0) {
+    const requestedQty = parseInt(item.quantity, 10);
+    if (isNaN(requestedQty) || requestedQty <= 0) {
       throw ApiError.badRequest(`Invalid quantity ${item.quantity} for product '${product.name}'`);
     }
 
-    const subtotal = Math.round(product.price * item.quantity * 100) / 100;
+    if (product.stockQuantity < requestedQty) {
+      throw ApiError.badRequest(
+        `Insufficient stock for '${product.name}'. Available: ${product.stockQuantity}, Requested: ${requestedQty}`
+      );
+    }
+  }
+
+  // 3. Calculate total
+  let calculatedTotal = 0;
+  const orderItems = [];
+
+  for (const item of orderItemsToProcess) {
+    const product = productMap.get(item.productId.toString());
+    const qty = parseInt(item.quantity, 10);
+    const subtotal = Math.round(product.price * qty * 100) / 100;
     calculatedTotal += subtotal;
 
     orderItems.push({
       productId: product._id,
       name: product.name,
       price: product.price,
-      quantity: item.quantity,
+      quantity: qty,
       subtotal,
     });
   }
 
   calculatedTotal = Math.round(calculatedTotal * 100) / 100;
 
-  // 2. Create the pending order document
-  const order = await Order.create({
-    orderNumber: generateOrderNumber(),
+  // 4. Create order
+  // Initial order status is PENDING, then transitions to RESERVED upon stock reservation
+  const orderNumber = generateOrderNumber();
+  const order = new Order({
+    orderNumber,
     userId,
     items: orderItems,
     totalAmount: calculatedTotal,
-    status: 'reserved',
+    status: 'PENDING',
     paymentStatus: 'pending',
     notes,
   });
 
-  try {
-    // 3. Coordinate with reservation service to atomically reserve inventory
-    await reservationService.createReservations(order._id, items);
+  await order.save();
 
-    // 4. If ordered from cart, mark user's cart as converted
-    if (userId && fromCart) {
-      await Cart.findOneAndUpdate(
-        { userId, status: 'active' },
-        { status: 'converted' }
-      );
+  try {
+    // Atomically reserve inventory items
+    await reservationService.createReservations(order._id, orderItemsToProcess);
+
+    // Transition status to RESERVED
+    order.status = 'RESERVED';
+    await order.save();
+
+    // Mark active cart converted if ordered from cart
+    if (activeCartDoc) {
+      activeCartDoc.status = 'converted';
+      await activeCartDoc.save();
+    } else if (userId && fromCart) {
+      await Cart.findOneAndUpdate({ userId, status: 'active' }, { status: 'converted' });
     }
 
-    return order;
+    const plainOrder = order.toObject();
+    plainOrder.reservationExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+    return plainOrder;
   } catch (error) {
-    // If reservation fails, mark order as cancelled
-    order.status = 'cancelled';
-    order.notes = `${order.notes} [Failed reservation: ${error.message}]`.trim();
+    // If reservation fails, update order status to FAILED
+    order.status = 'FAILED';
+    order.notes = `${order.notes} [Reservation Failed: ${error.message}]`.trim();
     await order.save();
     throw error;
   }
@@ -120,7 +163,9 @@ const getOrders = async (filters = {}) => {
   const { status, paymentStatus, userId, page = 1, limit = 20 } = filters;
 
   const query = {};
-  if (status) query.status = status;
+  if (status && status !== 'ALL') {
+    query.status = status.toUpperCase();
+  }
   if (paymentStatus) query.paymentStatus = paymentStatus;
   if (userId) query.userId = userId;
 
@@ -133,7 +178,6 @@ const getOrders = async (filters = {}) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(numericLimit)
-      .populate('userId', 'name email')
       .lean(),
     Order.countDocuments(query),
   ]);
@@ -150,6 +194,37 @@ const getOrders = async (filters = {}) => {
 };
 
 /**
+ * Mark order as PAID and confirm reservations
+ */
+const payOrder = async (orderId, paymentData = {}) => {
+  const order = await Order.findById(orderId);
+  if (!order) {
+    throw ApiError.notFound('Order not found');
+  }
+
+  const currentStatus = (order.status || '').toUpperCase();
+  if (currentStatus === 'PAID') {
+    return order;
+  }
+
+  if (['FAILED', 'CANCELLED', 'EXPIRED'].includes(currentStatus)) {
+    throw ApiError.badRequest(`Cannot pay an order with status ${currentStatus}`);
+  }
+
+  // Confirm inventory reservations
+  await reservationService.confirmReservations(orderId);
+
+  order.status = 'PAID';
+  order.paymentStatus = 'paid';
+  if (paymentData.notes) {
+    order.notes = `${order.notes} [Payment: ${paymentData.notes}]`.trim();
+  }
+
+  await order.save();
+  return order;
+};
+
+/**
  * Cancel an order and release reserved stock
  */
 const cancelOrder = async (orderId, reason = 'Cancelled by user') => {
@@ -158,11 +233,12 @@ const cancelOrder = async (orderId, reason = 'Cancelled by user') => {
     throw ApiError.notFound('Order not found');
   }
 
-  if (['completed', 'refunded', 'cancelled'].includes(order.status)) {
-    throw ApiError.badRequest(`Cannot cancel an order that is already ${order.status}`);
+  const currentStatus = (order.status || '').toUpperCase();
+  if (['PAID', 'CANCELLED', 'EXPIRED', 'FAILED'].includes(currentStatus)) {
+    throw ApiError.badRequest(`Cannot cancel an order that is already ${currentStatus}`);
   }
 
-  order.status = 'cancelled';
+  order.status = 'CANCELLED';
   order.notes = `${order.notes} [Cancelled: ${reason}]`.trim();
   await order.save();
 
@@ -178,5 +254,6 @@ module.exports = {
   getOrderById,
   getOrderByNumber,
   getOrders,
+  payOrder,
   cancelOrder,
 };
