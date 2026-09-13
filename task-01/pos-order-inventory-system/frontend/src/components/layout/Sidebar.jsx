@@ -12,18 +12,25 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-
-const navigation = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Inventory', href: '/inventory', icon: Boxes },
-  { name: 'POS Register', href: '/register', icon: ShoppingCart, badge: 'Soon' },
-  { name: 'Orders', href: '/orders', icon: Receipt, badge: 'Soon' },
-  { name: 'Reports', href: '/reports', icon: BarChart3, badge: 'Soon' },
-  { name: 'Settings', href: '/settings', icon: Settings },
-];
+import { useCart } from '../../context/CartContext';
 
 const Sidebar = () => {
   const { sidebarOpen, toggleSidebar } = useApp();
+  const { cart } = useCart();
+
+  const navigation = [
+    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+    { name: 'Inventory', href: '/inventory', icon: Boxes },
+    {
+      name: 'Cart / POS',
+      href: '/cart',
+      icon: ShoppingCart,
+      badge: cart?.totalItems > 0 ? `${cart.totalItems}` : null,
+    },
+    { name: 'Orders', href: '/orders', icon: Receipt },
+    { name: 'Reports', href: '/reports', icon: BarChart3, badge: 'Soon' },
+    { name: 'Settings', href: '/settings', icon: Settings },
+  ];
 
   return (
     <aside
