@@ -14,6 +14,15 @@ const startServer = async () => {
       console.log(`[Server] Running in ${env.NODE_ENV} mode on port ${env.PORT}`);
       console.log(`[Server] Health check: http://localhost:${env.PORT}/api/health`);
     });
+
+    server.on('error', (error) => {
+      if (error.code === 'EADDRINUSE') {
+        console.error(`[Server Error] Port ${env.PORT} is already in use. Please free up port ${env.PORT} or change PORT in .env.`);
+      } else {
+        console.error('[Server Error]', error.message);
+      }
+      process.exit(1);
+    });
   } catch (error) {
     console.error('[Server Error] Failed to start server:', error.message);
     process.exit(1);

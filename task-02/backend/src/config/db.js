@@ -1,11 +1,19 @@
+const dns = require('dns');
 const mongoose = require('mongoose');
 const env = require('./env');
+
+// Set reliable public DNS servers for resolving MongoDB Atlas SRV records
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1']);
+} catch (dnsErr) {
+  console.warn('[Database] Could not set custom DNS servers:', dnsErr.message);
+}
 
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(env.MONGODB_URI, {
       maxPoolSize: 10,
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 10000,
     });
 
     console.log(`[Database] MongoDB connected: ${conn.connection.host}`);
