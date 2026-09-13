@@ -8,7 +8,8 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "lint": "eslint src/",
-    "test:concurrency": "node scripts/test-concurrency.js"
+    "test:concurrency": "node scripts/test-concurrency.js",
+    "test:payments": "node scripts/test-payments.js"
   },
   "keywords": [
     "pos",

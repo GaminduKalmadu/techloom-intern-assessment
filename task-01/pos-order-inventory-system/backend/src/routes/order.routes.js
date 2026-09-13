@@ -13,9 +13,6 @@ router.get('/', orderController.getOrders);
 // GET /api/orders/:id - Get order details
 router.get('/:id', orderController.getOrderById);
 
-// POST /api/orders/:id/pay - Mark order as paid
-router.post('/:id/pay', orderController.payOrder);
-
 // POST /api/orders/:id/cancel - Cancel order and release stock
 router.post('/:id/cancel', orderController.cancelOrder);
 

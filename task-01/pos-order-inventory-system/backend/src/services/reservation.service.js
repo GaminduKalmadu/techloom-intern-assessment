@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const Reservation = require('../models/reservation.model');
 const Product = require('../models/product.model');
-const Order = require('../models/order.model');
 const env = require('../config/env');
 const ApiError = require('../utils/apiError');
 const logger = require('../utils/logger');
@@ -258,14 +257,14 @@ const releaseReservations = async (orderId) => {
  * Guaranteed concurrency-safe and idempotent:
  * - Uses atomic findOneAndUpdate on the reservation to lock it into 'expired' status.
  * - Safely restores stock via $inc on Product.
- * - Updates the parent Order status to 'EXPIRED' / 'expired'.
+ * - Uses the payment transaction to update Payment, Order, Reservation, and Product together.
  *
  * @returns {Promise<{ releasedReservations: number, restoredStockCount: number, expiredOrders: number }>}
  */
 const cleanupExpiredReservations = async () => {
   const now = new Date();
   const expiredCandidates = await Reservation.find({
-    status: 'reserved',
+    status: { $in: ['reserved', 'ACTIVE'] },
     expiresAt: { $lte: now },
   }).lean();
 
@@ -273,62 +272,33 @@ const cleanupExpiredReservations = async () => {
     return { releasedReservations: 0, restoredStockCount: 0, expiredOrders: 0 };
   }
 
-  let releasedReservations = 0;
-  let restoredStockCount = 0;
-  const affectedOrderIds = new Set();
-
-  for (const res of expiredCandidates) {
-    // Atomic Compare-And-Swap (CAS):
-    // Only proceed if status is STILL 'reserved' at this exact millisecond
-    const lockedRes = await Reservation.findOneAndUpdate(
-      { _id: res._id, status: 'reserved' },
-      { $set: { status: 'expired' } },
-      { new: true }
-    );
-
-    if (!lockedRes) {
-      // Another worker/cron run already acquired and handled this reservation
-      continue;
-    }
-
-    releasedReservations++;
-    restoredStockCount += res.quantity;
-
-    // Atomically restore product stock quantity
-    await Product.findByIdAndUpdate(res.productId, {
-      $inc: { stockQuantity: res.quantity },
-    });
-
-    affectedOrderIds.add(res.orderId.toString());
+  const paymentService = require('./payment.service');
+  const grouped = new Map();
+  for (const reservation of expiredCandidates) {
+    const key = reservation.orderId.toString();
+    const current = grouped.get(key) || { reservations: 0, stock: 0 };
+    current.reservations += 1;
+    current.stock += reservation.quantity;
+    grouped.set(key, current);
   }
 
-  // Update order status to 'EXPIRED' for all orders whose reservations expired
+  let releasedReservations = 0;
+  let restoredStockCount = 0;
   let expiredOrders = 0;
-  for (const orderId of affectedOrderIds) {
-    const activeCount = await Reservation.countDocuments({
-      orderId,
-      status: 'reserved',
-    });
-
-    // If no active reservations remain for this order, mark it EXPIRED
-    if (activeCount === 0) {
-      const updatedOrder = await Order.findOneAndUpdate(
-        {
-          _id: orderId,
-          status: { $in: ['RESERVED', 'PENDING', 'reserved', 'pending'] },
-        },
-        {
-          $set: {
-            status: 'EXPIRED',
-            notes: '[Auto-expired: inventory reservation timed out after 5 minutes]',
-          },
-        },
-        { new: true }
-      );
-
-      if (updatedOrder) {
-        expiredOrders++;
+  for (const [orderId, totals] of grouped) {
+    try {
+      const result = await paymentService.processPayment({
+        orderId,
+        paymentMethod: 'CARD',
+        idempotencyKey: `reservation-timeout:${orderId}`,
+      });
+      if (result.paymentStatus === 'TIMEOUT') {
+        releasedReservations += totals.reservations;
+        restoredStockCount += totals.stock;
+        expiredOrders += 1;
       }
+    } catch (error) {
+      if (![409, 404].includes(error.statusCode)) throw error;
     }
   }
 

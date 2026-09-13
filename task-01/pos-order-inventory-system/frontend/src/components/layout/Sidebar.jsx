@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
+  CreditCard,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useCart } from '../../context/CartContext';
@@ -28,6 +29,7 @@ const Sidebar = () => {
       badge: cart?.totalItems > 0 ? `${cart.totalItems}` : null,
     },
     { name: 'Orders', href: '/orders', icon: Receipt },
+    { name: 'Payments', href: '/admin/payments', icon: CreditCard },
     { name: 'Reports', href: '/reports', icon: BarChart3, badge: 'Soon' },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];

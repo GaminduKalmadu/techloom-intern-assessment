@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { CheckCircle2, AlertCircle, Info } from 'lucide-react';
 import * as cartService from '../services/cartService';
+import AddToCartModal from '../components/cart/AddToCartModal';
 
 const CartContext = createContext(null);
 
@@ -20,6 +22,18 @@ export const CartProvider = ({ children }) => {
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState(null);
   const [toast, setToast] = useState(null);
+
+  // Global Add-to-Cart Modal state
+  const [modalProduct, setModalProduct] = useState(null);
+
+  const promptAddToCart = (product) => {
+    if (!product) return;
+    setModalProduct(product);
+  };
+
+  const closeAddToCartModal = () => {
+    setModalProduct(null);
+  };
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type, id: Date.now() });
@@ -159,6 +173,9 @@ export const CartProvider = ({ children }) => {
         error,
         toast,
         addToCart,
+        promptAddToCart,
+        openAddToCartModal: promptAddToCart,
+        closeAddToCartModal,
         updateQuantity,
         removeItem,
         clearCart,
@@ -168,28 +185,44 @@ export const CartProvider = ({ children }) => {
       }}
     >
       {children}
+
+      {/* Global Add-to-Cart Modal with Dynamic Quantity & Price Calculator */}
+      <AddToCartModal
+        isOpen={!!modalProduct}
+        product={modalProduct}
+        isLoading={updating}
+        existingQuantityInCart={modalProduct ? getItemQuantity(modalProduct._id) : 0}
+        onClose={closeAddToCartModal}
+        onAdd={async (productId, quantity, productName) => {
+          try {
+            await addToCart(productId, quantity, productName);
+            closeAddToCartModal();
+          } catch (err) {
+            // error is displayed in toast
+          }
+        }}
+      />
+
       {/* Global Toast Notification */}
       {toast && (
-        <div className="fixed bottom-5 right-5 z-50 animate-bounce-in">
+        <div className="fixed bottom-6 right-6 z-[9999] animate-bounce-in pointer-events-auto">
           <div
-            className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-xl border text-sm font-medium transition-all ${
+            className={`flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border text-sm font-semibold transition-all ${
               toast.type === 'error'
-                ? 'bg-rose-50 border-rose-200 text-rose-800'
+                ? 'bg-rose-50 border-rose-300 text-rose-800'
                 : toast.type === 'info'
                 ? 'bg-slate-900 border-slate-800 text-white'
-                : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                : 'bg-slate-900/95 backdrop-blur-md border-slate-800 text-white'
             }`}
           >
-            <span
-              className={`w-2 h-2 rounded-full ${
-                toast.type === 'error'
-                  ? 'bg-rose-500'
-                  : toast.type === 'info'
-                  ? 'bg-blue-400'
-                  : 'bg-emerald-500'
-              }`}
-            />
-            <span>{toast.message}</span>
+            {toast.type === 'error' ? (
+              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+            ) : toast.type === 'info' ? (
+              <Info className="w-5 h-5 text-blue-400 shrink-0" />
+            ) : (
+              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+            )}
+            <span className="tracking-tight">{toast.message}</span>
           </div>
         </div>
       )}

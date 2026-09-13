@@ -60,19 +60,6 @@ const getOrderById = async (req, res, next) => {
 };
 
 /**
- * Pay / confirm order
- * POST /api/orders/:id/pay
- */
-const payOrder = async (req, res, next) => {
-  try {
-    const order = await orderService.payOrder(req.params.id, req.body);
-    return ApiResponse.success(res, 'Order marked as PAID successfully', order);
-  } catch (err) {
-    next(err);
-  }
-};
-
-/**
  * Cancel order and release reserved inventory
  * POST /api/orders/:id/cancel
  */
@@ -96,6 +83,5 @@ module.exports = {
   createOrder,
   getOrders,
   getOrderById,
-  payOrder,
   cancelOrder,
 };

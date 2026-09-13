@@ -65,6 +65,10 @@ const errorHandler = (err, req, res, next) => {
     message: error.message,
   };
 
+  if (error.code) {
+    responsePayload.code = error.code;
+  }
+
   if (error.errors) {
     responsePayload.errors = error.errors;
   }

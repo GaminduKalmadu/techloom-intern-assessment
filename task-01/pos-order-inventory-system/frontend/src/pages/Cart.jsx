@@ -25,7 +25,7 @@ import ErrorAlert from '../components/common/ErrorAlert';
 
 const Cart = () => {
   const navigate = useNavigate();
-  const { cart, loading, updating, updateQuantity, removeItem, clearCart, addToCart } = useCart();
+  const { cart, loading, updating, updateQuantity, removeItem, clearCart, addToCart, promptAddToCart } = useCart();
   const [catalogProducts, setCatalogProducts] = useState([]);
   const [loadingCatalog, setLoadingCatalog] = useState(false);
   const [promoCode, setPromoCode] = useState('');
@@ -197,7 +197,7 @@ const Cart = () => {
                       size="sm"
                       className="mt-3 w-full text-xs"
                       disabled={prod.stockQuantity <= 0 || updating}
-                      onClick={() => addToCart(prod._id, 1, prod.name)}
+                      onClick={() => promptAddToCart(prod)}
                     >
                       <Plus className="w-3.5 h-3.5 mr-1" />
                       Add to Cart
@@ -376,7 +376,7 @@ const Cart = () => {
                           size="sm"
                           className="mt-2 w-full text-[11px] py-1"
                           disabled={p.stockQuantity <= 0 || updating}
-                          onClick={() => addToCart(p._id, 1, p.name)}
+                          onClick={() => promptAddToCart(p)}
                         >
                           {inCart ? 'Add More' : '+ Add'}
                         </Button>

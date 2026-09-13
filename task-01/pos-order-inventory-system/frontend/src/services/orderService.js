@@ -33,10 +33,6 @@ export const getOrderById = async (id) => {
  * @param {string} id
  * @param {object} paymentData
  */
-export const payOrder = async (id, paymentData = {}) => {
-  return await api.post(`/orders/${id}/pay`, paymentData);
-};
-
 /**
  * Cancel order and release reserved stock
  * @param {string} id

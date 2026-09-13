@@ -96,3 +96,31 @@ npm run dev
 ```
 
 Frontend will run at: `http://localhost:5173`
+
+---
+
+## Mock Payment Gateway
+
+The checkout flow uses an internal deterministic gateway at `POST /api/v1/payments/process`.
+The backend loads the order total and reservation state from MongoDB; the browser never supplies
+an amount, stock value, payment status, or raw card data.
+
+Supported results:
+
+- `SUCCESS`: the order becomes `PAID`, reservations are confirmed, and already-deducted stock stays deducted.
+- `FAILED`: the order becomes `FAILED`, reservations are released, and the exact held quantities return to stock.
+- `TIMEOUT`: the order becomes `EXPIRED`, reservations expire, and the exact held quantities return to stock.
+
+Every request requires an `Idempotency-Key` header. Reusing a key for the same order returns the
+original result without another transaction or stock mutation. A partial unique MongoDB index also
+guarantees at most one successful payment per order. Payment, order, reservation, and any stock
+updates run in a MongoDB transaction. The original atomic reservation decrement remains unchanged.
+
+In development, set `MOCK_PAYMENT_CONTROLS_ENABLED=true` in `backend/.env` and
+`VITE_MOCK_PAYMENT_CONTROLS_ENABLED=true` in `frontend/.env`. The payment page then exposes polished
+SUCCESS, FAILED, and TIMEOUT simulation choices. These controls are rejected by the API when disabled.
+Use test-only card values such as `4242 4242 4242 4242`, `12/30`, and `123`; those fields stay in the
+browser and are never logged or persisted.
+
+The read-only admin transaction screen is available at `/admin/payments`, with search, status filters,
+details, and related-order navigation.

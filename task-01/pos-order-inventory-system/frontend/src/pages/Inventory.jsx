@@ -33,7 +33,7 @@ import * as productService from '../services/productService';
 import { useCart } from '../context/CartContext';
 
 const Inventory = () => {
-  const { addToCart } = useCart();
+  const { addToCart, promptAddToCart } = useCart();
   // State: Data
   const [products, setProducts] = useState([]);
   const [stats, setStats] = useState({
@@ -645,7 +645,7 @@ const Inventory = () => {
                               type="button"
                               title={item.stockQuantity > 0 ? "Add to Cart" : "Out of stock"}
                               disabled={item.stockQuantity <= 0}
-                              onClick={() => addToCart(item._id, 1, item.name)}
+                              onClick={() => promptAddToCart(item)}
                               className="p-1.5 rounded-lg text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                             >
                               <ShoppingCart className="w-4 h-4" />
