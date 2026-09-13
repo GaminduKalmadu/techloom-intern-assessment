@@ -19,6 +19,7 @@ import {
   Layers,
   CheckCircle2,
   X,
+  ShoppingCart,
 } from 'lucide-react';
 import Card, { CardHeader, CardBody } from '../components/common/Card';
 import Button from '../components/common/Button';
@@ -29,8 +30,10 @@ import ProductModal from '../components/inventory/ProductModal';
 import StockAdjustModal from '../components/inventory/StockAdjustModal';
 import DeleteConfirmModal from '../components/inventory/DeleteConfirmModal';
 import * as productService from '../services/productService';
+import { useCart } from '../context/CartContext';
 
 const Inventory = () => {
+  const { addToCart } = useCart();
   // State: Data
   const [products, setProducts] = useState([]);
   const [stats, setStats] = useState({
@@ -637,6 +640,17 @@ const Inventory = () => {
                         {/* Row Actions */}
                         <td className="px-5 py-3.5 text-right">
                           <div className="flex items-center justify-end gap-1.5 opacity-90 group-hover:opacity-100">
+                            {/* Add to Cart Button */}
+                            <button
+                              type="button"
+                              title={item.stockQuantity > 0 ? "Add to Cart" : "Out of stock"}
+                              disabled={item.stockQuantity <= 0}
+                              onClick={() => addToCart(item._id, 1, item.name)}
+                              className="p-1.5 rounded-lg text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            >
+                              <ShoppingCart className="w-4 h-4" />
+                            </button>
+
                             {/* Quick Restock Button */}
                             <button
                               type="button"
