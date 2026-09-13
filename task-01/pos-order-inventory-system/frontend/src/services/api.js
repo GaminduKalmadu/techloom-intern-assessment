@@ -33,6 +33,7 @@ api.interceptors.response.use(
       message: error.response?.data?.message || error.message || 'Something went wrong',
       status: error.response?.status || 500,
       errors: error.response?.data?.errors || null,
+      code: error.response?.data?.code || null,
     };
 
     // Auto-logout on 401 Unauthorized if needed in future

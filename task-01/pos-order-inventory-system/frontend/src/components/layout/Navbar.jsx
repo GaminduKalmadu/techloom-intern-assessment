@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import {
   Menu,
   Search,
@@ -6,12 +7,15 @@ import {
   Activity,
   Database,
   RefreshCw,
+  ShoppingCart,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { useCart } from '../../context/CartContext';
 import Badge from '../common/Badge';
 
 const Navbar = () => {
   const { toggleMobileMenu, systemHealth, refreshHealth } = useApp();
+  const { cart } = useCart();
 
   const getStatusBadge = () => {
     switch (systemHealth.status) {
@@ -98,6 +102,20 @@ const Navbar = () => {
         </div>
 
         <div className="h-5 w-px bg-slate-200 mx-1 hidden sm:block" />
+
+        {/* Shopping Cart Button with Live Counter Badge */}
+        <Link
+          to="/cart"
+          aria-label="View shopping cart"
+          className="relative p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+        >
+          <ShoppingCart className="w-4 h-4" />
+          {cart?.totalItems > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white shadow-xs">
+              {cart.totalItems}
+            </span>
+          )}
+        </Link>
 
         {/* Notification Bell */}
         <button

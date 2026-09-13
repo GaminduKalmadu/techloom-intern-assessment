@@ -6,11 +6,12 @@ class ApiError extends Error {
    * @param {boolean} isOperational - True if expected operational error
    * @param {string} stack - Optional stack trace
    */
-  constructor(statusCode, message, errors = null, isOperational = true, stack = '') {
+  constructor(statusCode, message, errors = null, isOperational = true, stack = '', code = null) {
     super(message);
     this.statusCode = statusCode;
     this.errors = errors;
     this.isOperational = isOperational;
+    this.code = code;
 
     if (stack) {
       this.stack = stack;
@@ -35,8 +36,20 @@ class ApiError extends Error {
     return new ApiError(404, message);
   }
 
-  static conflict(message = 'Resource conflict') {
+  static conflict(message = 'Resource conflict or duplicate entry') {
     return new ApiError(409, message);
+  }
+
+  static coded(statusCode, code, message, errors = null) {
+    return new ApiError(statusCode, message, errors, true, '', code);
+  }
+
+  static unprocessable(message = 'Unprocessable entity', errors = null) {
+    return new ApiError(422, message, errors);
+  }
+
+  static tooManyRequests(message = 'Too many requests, please slow down') {
+    return new ApiError(429, message);
   }
 
   static internal(message = 'Internal Server Error') {
