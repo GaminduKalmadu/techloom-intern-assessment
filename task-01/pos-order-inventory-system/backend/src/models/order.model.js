@@ -41,7 +41,7 @@ const orderSchema = new mongoose.Schema(
       index: true,
     },
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.Mixed,
       ref: 'User',
       default: null, // Null indicates walk-in customer at POS
     },
@@ -59,8 +59,22 @@ const orderSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'reserved', 'paid', 'completed', 'cancelled', 'refunded'],
-      default: 'pending',
+      enum: [
+        'PENDING',
+        'RESERVED',
+        'PAID',
+        'FAILED',
+        'CANCELLED',
+        'EXPIRED',
+        'pending',
+        'reserved',
+        'paid',
+        'failed',
+        'cancelled',
+        'expired',
+      ],
+      default: 'PENDING',
+      set: (v) => (v ? v.toUpperCase() : v),
     },
     paymentStatus: {
       type: String,
