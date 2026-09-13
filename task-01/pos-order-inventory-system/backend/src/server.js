@@ -4,6 +4,10 @@ const env = require('./config/env');
 const { connectDB } = require('./config/db');
 const logger = require('./utils/logger');
 const mongoose = require('mongoose');
+const {
+  startReservationScheduler,
+  stopReservationScheduler,
+} = require('./schedulers/reservation.scheduler');
 
 const server = http.createServer(app);
 
@@ -12,6 +16,9 @@ const startServer = async () => {
     // Attempt database connection
     logger.info('Connecting to MongoDB database...');
     await connectDB();
+
+    // Start background reservation expiration scheduler (runs every minute)
+    startReservationScheduler('* * * * *');
 
     // Start listening
     server.listen(env.PORT, () => {
@@ -32,6 +39,9 @@ const startServer = async () => {
 // Graceful shutdown handling
 const gracefulShutdown = (signal) => {
   logger.warn(`Received ${signal}. Starting graceful shutdown...`);
+
+  // Stop background scheduler tasks
+  stopReservationScheduler();
 
   server.close(async () => {
     logger.info('HTTP server closed. Terminating database connections...');

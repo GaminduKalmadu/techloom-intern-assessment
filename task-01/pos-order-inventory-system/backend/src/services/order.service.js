@@ -1,16 +1,19 @@
+const crypto = require('crypto');
 const Order = require('../models/order.model');
 const Product = require('../models/product.model');
 const Cart = require('../models/cart.model');
 const reservationService = require('./reservation.service');
+const env = require('../config/env');
 const ApiError = require('../utils/apiError');
 
 /**
- * Generate unique order invoice number (e.g. ORD-20260912-7894)
+ * Generate unique order invoice number (e.g. ORD-20260913-K7F8-A9B2)
  */
 const generateOrderNumber = () => {
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-  return `ORD-${dateStr}-${randomSuffix}`;
+  const timeHex = Date.now().toString(36).toUpperCase();
+  const randomHex = crypto.randomBytes(3).toString('hex').toUpperCase();
+  return `ORD-${dateStr}-${timeHex}-${randomHex}`;
 };
 
 /**
@@ -123,7 +126,7 @@ const createOrder = async ({ userId = null, items = null, notes = '', fromCart =
     }
 
     const plainOrder = order.toObject();
-    plainOrder.reservationExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+    plainOrder.reservationExpiresAt = new Date(Date.now() + env.RESERVATION_TTL_MINUTES * 60 * 1000);
     return plainOrder;
   } catch (error) {
     // If reservation fails, update order status to FAILED
