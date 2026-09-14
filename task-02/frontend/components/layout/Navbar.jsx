@@ -22,10 +22,12 @@ import {
 import PageContainer from '../common/PageContainer';
 import Button from '../common/Button';
 import { useAuth } from '@/context/AuthContext';
+import { useCart } from '@/context/CartContext';
 
 export const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, isAuthenticated, isAdmin, isCustomer, logout } = useAuth();
+  const { itemCount } = useCart();
   const pathname = usePathname();
 
   const handlePlaceholderClick = (moduleName) => {
@@ -152,14 +154,22 @@ export const Navbar = () => {
                 >
                   Products
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => handlePlaceholderClick('Shopping Cart')}
-                  className="px-3 py-1.5 rounded-lg hover:text-blue-600 hover:bg-slate-50 transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                <Link
+                  href="/cart"
+                  className={`px-3 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1.5 relative ${
+                    pathname === '/cart' ? 'text-blue-600 bg-blue-50 font-bold' : 'hover:text-blue-600 hover:bg-slate-50'
+                  }`}
                 >
-                  <ShoppingCart className="w-3.5 h-3.5" />
-                  Cart
-                </button>
+                  <div className="relative flex items-center">
+                    <ShoppingCart className="w-4 h-4" />
+                    {itemCount > 0 && (
+                      <span className="absolute -top-1.5 -right-2 bg-blue-600 text-white text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                        {itemCount > 99 ? '99+' : itemCount}
+                      </span>
+                    )}
+                  </div>
+                  <span>Cart</span>
+                </Link>
                 <button
                   type="button"
                   onClick={() => handlePlaceholderClick('My Orders')}
@@ -331,16 +341,23 @@ export const Navbar = () => {
                 >
                   Products
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    handlePlaceholderClick('Shopping Cart');
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                <Link
+                  href="/cart"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                    pathname === '/cart' ? 'text-blue-600 bg-blue-50 font-bold' : 'text-slate-700 hover:bg-slate-100'
+                  }`}
                 >
-                  Cart
-                </button>
+                  <span className="flex items-center gap-2">
+                    <ShoppingCart className="w-4 h-4" />
+                    Cart
+                  </span>
+                  {itemCount > 0 && (
+                    <span className="bg-blue-600 text-white text-xs font-black px-2 py-0.5 rounded-full">
+                      {itemCount}
+                    </span>
+                  )}
+                </Link>
                 <button
                   type="button"
                   onClick={() => {
