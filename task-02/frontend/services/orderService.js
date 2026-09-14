@@ -15,6 +15,14 @@ export const orderService = {
   getOrderById: async (id) => {
     return await api.get(`/orders/${id}`);
   },
+
+  /**
+   * Cancel confirmed paid order and simulate a refund
+   * @param {string} id
+   */
+  cancelOrder: async (id) => {
+    return await api.post(`/orders/${id}/cancel`);
+  },
 };
 
 export default orderService;

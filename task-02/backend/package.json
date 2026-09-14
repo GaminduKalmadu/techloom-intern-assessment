@@ -14,7 +14,8 @@
     "test:cart": "node scripts/test-cart.js",
     "test:checkout": "node scripts/test-checkout.js",
     "test:payment": "node scripts/test-payment.js",
-    "test:orders": "node scripts/test-orders.js"
+    "test:orders": "node scripts/test-orders.js",
+    "test:cancellation": "node scripts/test-cancellation-refund.js"
   },
   "keywords": [
     "ecommerce",
