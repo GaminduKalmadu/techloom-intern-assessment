@@ -261,6 +261,7 @@ async function runProductTests() {
 
       const res = await request(baseUrl, `/products/${createdProductId}`, {
         method: 'GET',
+        headers: { Authorization: `Bearer ${adminToken}` },
       });
 
       const product = res.data.data.product;

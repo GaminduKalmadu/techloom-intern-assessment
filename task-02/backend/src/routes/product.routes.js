@@ -7,14 +7,14 @@ const {
   updateProduct,
   deleteProduct,
 } = require('../controllers/product.controller');
-const { protect, requireAdmin } = require('../middleware/auth.middleware');
+const { protect, requireAdmin, optionalAuth } = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
-// Public read routes
-router.get('/', getProducts);
+// Public / Customer read routes (with optional auth for admin bypass and data masking)
+router.get('/', optionalAuth, getProducts);
 router.get('/stats', protect, requireAdmin, getInventoryStats);
-router.get('/:id', getProductById);
+router.get('/:id', optionalAuth, getProductById);
 
 // Admin-only write routes
 router.post('/', protect, requireAdmin, createProduct);
