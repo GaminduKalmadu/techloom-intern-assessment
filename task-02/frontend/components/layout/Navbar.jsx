@@ -170,14 +170,15 @@ export const Navbar = () => {
                   </div>
                   <span>Cart</span>
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => handlePlaceholderClick('My Orders')}
-                  className="px-3 py-1.5 rounded-lg hover:text-blue-600 hover:bg-slate-50 transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                <Link
+                  href="/orders"
+                  className={`px-3 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1.5 ${
+                    pathname?.startsWith('/orders') ? 'text-blue-600 bg-blue-50 font-bold' : 'hover:text-blue-600 hover:bg-slate-50'
+                  }`}
                 >
                   <Package className="w-3.5 h-3.5" />
                   My Orders
-                </button>
+                </Link>
               </>
             ) : (
               /* GUEST / VISITOR NAVIGATION */
@@ -358,16 +359,16 @@ export const Navbar = () => {
                     </span>
                   )}
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    handlePlaceholderClick('My Orders');
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                <Link
+                  href="/orders"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                    pathname?.startsWith('/orders') ? 'text-blue-600 bg-blue-50 font-bold' : 'text-slate-700 hover:bg-slate-100'
+                  }`}
                 >
+                  <Package className="w-4 h-4" />
                   My Orders
-                </button>
+                </Link>
               </>
             ) : (
               <>

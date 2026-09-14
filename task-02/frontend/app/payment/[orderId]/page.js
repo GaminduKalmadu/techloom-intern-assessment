@@ -23,6 +23,7 @@ import {
   Info,
   XCircle,
   HelpCircle,
+  Package,
 } from 'lucide-react';
 
 export default function PaymentPage() {
@@ -202,6 +203,9 @@ export default function PaymentPage() {
       if (res?.data?.status === 'SUCCESS') {
         setPaymentState('SUCCESS');
         setPaymentResult(res.data);
+        setTimeout(() => {
+          router.push(`/order-confirmation/${order._id}`);
+        }, 800);
       } else if (res?.data?.status === 'FAILED') {
         setPaymentState('FAILED');
         setPaymentResult(res.data);
@@ -312,17 +316,25 @@ export default function PaymentPage() {
           <div className="flex flex-col gap-2 pt-2">
             <Button
               variant="primary"
-              onClick={() => router.push('/')}
-              className="w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2"
+              onClick={() => router.push(`/order-confirmation/${order._id}`)}
+              className="w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
             >
-              <ShoppingBag className="w-4 h-4" />
-              Continue Shopping
+              <CheckCircle2 className="w-4 h-4" />
+              View Order Confirmation
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => router.push('/orders')}
+              className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2"
+            >
+              <Package className="w-4 h-4" />
+              View My Orders
             </Button>
             <Link
-              href="/cart"
+              href="/"
               className="text-xs font-bold text-slate-500 hover:text-slate-800 py-1 transition-colors"
             >
-              View Shopping Cart
+              Continue Shopping Catalog
             </Link>
           </div>
         </div>

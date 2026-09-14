@@ -13,7 +13,8 @@
     "test:store": "node scripts/test-customer-store.js",
     "test:cart": "node scripts/test-cart.js",
     "test:checkout": "node scripts/test-checkout.js",
-    "test:payment": "node scripts/test-payment.js"
+    "test:payment": "node scripts/test-payment.js",
+    "test:orders": "node scripts/test-orders.js"
   },
   "keywords": [
     "ecommerce",
