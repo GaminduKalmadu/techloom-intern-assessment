@@ -22,7 +22,9 @@ import {
   Sparkles,
   Lock,
   AlertTriangle,
+  RefreshCw,
 } from 'lucide-react';
+import checkoutService from '@/services/checkoutService';
 
 export default function CartPage() {
   const router = useRouter();
@@ -38,8 +40,32 @@ export default function CartPage() {
     clearCart,
   } = useCart();
 
-  const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
+  const [checkingOut, setCheckingOut] = useState(false);
+  const [checkoutError, setCheckoutError] = useState(null);
+
+  const handleProceedToCheckout = async () => {
+    try {
+      setCheckingOut(true);
+      setCheckoutError(null);
+      const res = await checkoutService.createCheckout();
+      if (res?.success && res?.data?.orderId) {
+        router.push(`/checkout?orderId=${res.data.orderId}`);
+      } else {
+        setCheckoutError(res?.message || 'Failed to initialize checkout.');
+      }
+    } catch (err) {
+      if (err.status === 409) {
+        setCheckoutError(
+          err.message || 'Inventory conflict: Some items in your cart have insufficient stock or were just reserved by another shopper. Please review your cart.'
+        );
+      } else {
+        setCheckoutError(err.message || 'Unable to proceed to checkout.');
+      }
+    } finally {
+      setCheckingOut(false);
+    }
+  };
 
   // Unauthenticated Guest View
   if (!authLoading && !isAuthenticated) {
@@ -307,20 +333,37 @@ export default function CartPage() {
               </div>
             </div>
 
-            {/* Checkout Action Button */}
+            {/* Checkout Action Button & Error Alert */}
             <div className="space-y-3 pt-2">
+              {checkoutError && (
+                <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5">
+                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                  <span className="leading-relaxed font-medium">{checkoutError}</span>
+                </div>
+              )}
+
               <Button
                 variant="primary"
-                onClick={() => setCheckoutModalOpen(true)}
+                disabled={checkingOut || items.length === 0}
+                onClick={handleProceedToCheckout}
                 className="w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 text-base shadow-lg shadow-blue-500/20"
               >
-                Proceed to Checkout
-                <ArrowRight className="w-4 h-4" />
+                {checkingOut ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Reserving Stock...
+                  </>
+                ) : (
+                  <>
+                    Proceed to Checkout
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </Button>
 
               <div className="flex items-center justify-center gap-2 text-[11px] text-slate-500">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>SSL Encrypted • 30-Day Money Back Guarantee</span>
+                <span>SSL Encrypted • 5-Min Concurrency-Safe Stock Hold</span>
               </div>
             </div>
 
@@ -375,51 +418,6 @@ export default function CartPage() {
         </div>
       )}
 
-      {/* Checkout Transition Notice Modal */}
-      {checkoutModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-100 space-y-5 animate-in zoom-in-95 duration-200">
-            <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto">
-              <CheckCircle2 className="w-6 h-6" />
-            </div>
-
-            <div className="text-center space-y-1">
-              <h3 className="text-xl font-black text-slate-900">Checkout Preparation</h3>
-              <p className="text-xs text-slate-500">
-                Cart ready for checkout & stock reservation
-              </p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
-              <div className="flex justify-between text-xs font-bold text-slate-700">
-                <span>Items Selected:</span>
-                <span>{itemCount} units</span>
-              </div>
-              <div className="flex justify-between text-xs font-bold text-slate-700">
-                <span>Total Order Valuation:</span>
-                <span className="text-blue-600">${subtotal.toFixed(2)}</span>
-              </div>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-100 text-xs text-blue-900 space-y-1">
-              <p className="font-bold">🚀 Section 02 Cart Ready:</p>
-              <p className="leading-relaxed">
-                Your cart state and subtotal have been verified against the database. Address collection, temporary stock reservation (10-minute hold), and payment gateway processing will be unlocked in the upcoming checkout assessment phase.
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-2 pt-2">
-              <Button
-                variant="primary"
-                onClick={() => setCheckoutModalOpen(false)}
-                className="w-full py-3 rounded-xl font-bold"
-              >
-                Continue Shopping
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </PageContainer>
   );
 }
