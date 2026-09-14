@@ -32,7 +32,7 @@ const corsOptions = {
     }
 
     // Production checks strict CORS whitelist
-    if (env.CORS_WHITELIST.includes(origin)) {
+    if (env.CORS_WHITELIST.includes('*') || env.CORS_WHITELIST.includes(origin) || (origin && origin.includes('vercel.app'))) {
       return callback(null, true);
     }
 
