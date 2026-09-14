@@ -7,6 +7,7 @@ import PageContainer from '@/components/common/PageContainer';
 import Button from '@/components/common/Button';
 import Loading from '@/components/common/Loading';
 import productService from '@/services/productService';
+import { useCart } from '@/context/CartContext';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -27,6 +28,7 @@ export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
   const productId = params?.id;
+  const { addToCart, actionLoadingId } = useCart();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -83,16 +85,22 @@ export default function ProductDetailPage() {
     }
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (isOutOfStock || quantity < 1) return;
-    setAddedItemDetails({
-      name: product.name,
-      quantity,
-      price: product.price,
-      total: (product.price * quantity).toFixed(2),
-      image: product.imageUrl,
-    });
-    setCartModalOpen(true);
+
+    const res = await addToCart(product._id, quantity);
+    if (res?.requireAuth) {
+      router.push(`/login?redirect=/products/${product._id}`);
+    } else if (res?.success) {
+      setAddedItemDetails({
+        name: product.name,
+        quantity,
+        price: product.price,
+        total: (product.price * quantity).toFixed(2),
+        image: product.imageUrl,
+      });
+      setCartModalOpen(true);
+    }
   };
 
   if (loading) {
@@ -356,27 +364,28 @@ export default function ProductDetailPage() {
 
             <div className="p-3.5 rounded-xl bg-blue-50/60 border border-blue-100 text-xs text-blue-900">
               <p className="font-medium">
-                🛒 <strong>Cart Notice:</strong> Shopping cart persistence, stock reservation, and checkout processing will be connected in the upcoming assessment section.
+                🛒 <strong>Cart Saved:</strong> Item added to your active cart. You can review items and proceed to checkout anytime.
               </p>
             </div>
 
             <div className="flex flex-col gap-2 pt-2">
               <Button
                 variant="primary"
+                onClick={() => {
+                  setCartModalOpen(false);
+                  router.push('/cart');
+                }}
+                className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2"
+              >
+                <ShoppingCart className="w-4 h-4" />
+                View Shopping Cart
+              </Button>
+              <Button
+                variant="secondary"
                 onClick={() => setCartModalOpen(false)}
                 className="w-full py-3 rounded-xl font-bold"
               >
                 Keep Browsing
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setCartModalOpen(false);
-                  router.push('/');
-                }}
-                className="w-full py-3 rounded-xl font-bold"
-              >
-                Return to Product Catalog
               </Button>
             </div>
           </div>

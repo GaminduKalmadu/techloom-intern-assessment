@@ -2,11 +2,13 @@
 
 import React, { useState, useEffect, useTransition } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import PageContainer from '@/components/common/PageContainer';
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
 import productService from '@/services/productService';
 import categoryService from '@/services/categoryService';
+import { useCart } from '@/context/CartContext';
 import {
   Search,
   SlidersHorizontal,
@@ -101,14 +103,22 @@ export default function CustomerStorePage() {
     search.trim() || selectedCategory || minPrice !== '' || maxPrice !== '' || availability
   );
 
-  const handleAddToCartClick = (e, product) => {
+  const router = useRouter();
+  const { addToCart, actionLoadingId } = useCart();
+
+  const handleAddToCartClick = async (e, product) => {
     e.preventDefault();
     e.stopPropagation();
     const availableStock = typeof product.availableStock === 'number' ? product.availableStock : 0;
     if (availableStock <= 0) return;
 
-    setSelectedCartProduct(product);
-    setCartModalOpen(true);
+    const res = await addToCart(product._id, 1);
+    if (res?.requireAuth) {
+      router.push('/login?redirect=/cart');
+    } else if (res?.success) {
+      setSelectedCartProduct(product);
+      setCartModalOpen(true);
+    }
   };
 
   return (
@@ -710,25 +720,29 @@ export default function CustomerStorePage() {
 
             <div className="p-3.5 rounded-xl bg-blue-50/60 border border-blue-100 text-xs text-blue-900">
               <p className="font-medium">
-                🛒 <strong>Cart Notice:</strong> Shopping cart persistence, stock reservation, and checkout processing will be connected in the upcoming assessment section.
+                🛒 <strong>Cart Saved:</strong> Item has been added to your active shopping cart. You can review items and proceed to checkout anytime.
               </p>
             </div>
 
             <div className="flex flex-col gap-2 pt-2">
               <Button
                 variant="primary"
+                onClick={() => {
+                  setCartModalOpen(false);
+                  router.push('/cart');
+                }}
+                className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2"
+              >
+                <ShoppingCart className="w-4 h-4" />
+                View Shopping Cart
+              </Button>
+              <Button
+                variant="secondary"
                 onClick={() => setCartModalOpen(false)}
                 className="w-full py-3 rounded-xl font-bold"
               >
-                Keep Shopping
+                Keep Browsing Catalog
               </Button>
-              <Link
-                href={`/products/${selectedCartProduct._id}`}
-                onClick={() => setCartModalOpen(false)}
-                className="w-full py-3 rounded-xl font-bold text-center bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm transition-colors"
-              >
-                View Product Specifications
-              </Link>
             </div>
           </div>
         </div>
