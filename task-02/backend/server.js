@@ -1,0 +1,65 @@
+const app = require('./src/app');
+const env = require('./src/config/env');
+const { connectDB } = require('./src/config/db');
+const seedAdmin = require('./src/scripts/seedAdmin');
+const seedCategoriesAndProducts = require('./src/scripts/seedCategories');
+const {
+  startReservationExpiryWorker,
+  stopReservationExpiryWorker,
+} = require('./src/services/reservationExpiry.service');
+
+let server;
+
+const startServer = async () => {
+  try {
+    // 1. Establish database connection
+    await connectDB();
+
+    // 2. Seed default admin account if not already present
+    await seedAdmin();
+
+    // 3. Seed starter categories & catalog if empty
+    await seedCategoriesAndProducts();
+
+    // 4. Start background reservation expiry worker
+    startReservationExpiryWorker();
+
+    // 5. Start Express server
+    server = app.listen(env.PORT, () => {
+      console.log(`[Server] Running in ${env.NODE_ENV} mode on port ${env.PORT}`);
+      console.log(`[Server] Health check: http://localhost:${env.PORT}/api/health`);
+    });
+
+    server.on('error', (error) => {
+      if (error.code === 'EADDRINUSE') {
+        console.error(`[Server Error] Port ${env.PORT} is already in use. Please free up port ${env.PORT} or change PORT in .env.`);
+      } else {
+        console.error('[Server Error]', error.message);
+      }
+      process.exit(1);
+    });
+  } catch (error) {
+    console.error('[Server Error] Failed to start server:', error.message);
+    process.exit(1);
+  }
+};
+
+// Graceful shutdown handling
+const gracefulShutdown = (signal) => {
+  console.log(`\n[Server] Received ${signal}. Shutting down gracefully...`);
+  stopReservationExpiryWorker();
+  if (server) {
+    server.close(() => {
+      console.log('[Server] HTTP server closed');
+      process.exit(0);
+    });
+  } else {
+    process.exit(0);
+  }
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+startServer();
+
