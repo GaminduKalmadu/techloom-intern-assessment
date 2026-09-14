@@ -113,27 +113,30 @@ export const Navbar = () => {
                 >
                   Inventory
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => handlePlaceholderClick('Orders Management')}
-                  className="px-3 py-1.5 rounded-lg hover:text-purple-600 hover:bg-slate-50 transition-colors cursor-pointer"
+                <Link
+                  href="/admin/orders"
+                  className={`px-3 py-1.5 rounded-lg transition-colors ${
+                    pathname?.startsWith('/admin/orders') ? 'text-purple-600 bg-purple-50 font-bold' : 'hover:text-purple-600 hover:bg-slate-50'
+                  }`}
                 >
                   Orders
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePlaceholderClick('Payments Gateway')}
-                  className="px-3 py-1.5 rounded-lg hover:text-purple-600 hover:bg-slate-50 transition-colors cursor-pointer"
+                </Link>
+                <Link
+                  href="/admin/payments"
+                  className={`px-3 py-1.5 rounded-lg transition-colors ${
+                    pathname?.startsWith('/admin/payments') ? 'text-purple-600 bg-purple-50 font-bold' : 'hover:text-purple-600 hover:bg-slate-50'
+                  }`}
                 >
                   Payments
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePlaceholderClick('Refunds Management')}
-                  className="px-3 py-1.5 rounded-lg hover:text-purple-600 hover:bg-slate-50 transition-colors cursor-pointer"
+                </Link>
+                <Link
+                  href="/admin/refunds"
+                  className={`px-3 py-1.5 rounded-lg transition-colors ${
+                    pathname?.startsWith('/admin/refunds') ? 'text-purple-600 bg-purple-50 font-bold' : 'hover:text-purple-600 hover:bg-slate-50'
+                  }`}
                 >
                   Refunds
-                </button>
+                </Link>
               </>
             ) : isCustomer ? (
               /* CUSTOMER NAVIGATION */
@@ -295,36 +298,33 @@ export const Navbar = () => {
                 >
                   Inventory
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    handlePlaceholderClick('Orders Management');
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                <Link
+                  href="/admin/orders"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                    pathname?.startsWith('/admin/orders') ? 'text-purple-600 bg-purple-50 font-bold' : 'text-slate-700 hover:bg-slate-100'
+                  }`}
                 >
                   Orders
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    handlePlaceholderClick('Payments Gateway');
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                </Link>
+                <Link
+                  href="/admin/payments"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                    pathname?.startsWith('/admin/payments') ? 'text-purple-600 bg-purple-50 font-bold' : 'text-slate-700 hover:bg-slate-100'
+                  }`}
                 >
                   Payments
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    handlePlaceholderClick('Refunds Management');
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                </Link>
+                <Link
+                  href="/admin/refunds"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                    pathname?.startsWith('/admin/refunds') ? 'text-purple-600 bg-purple-50 font-bold' : 'text-slate-700 hover:bg-slate-100'
+                  }`}
                 >
                   Refunds
-                </button>
+                </Link>
               </>
             ) : isCustomer ? (
               <>
