@@ -87,27 +87,30 @@ export const Navbar = () => {
                 >
                   Overview
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => handlePlaceholderClick('Admin Dashboard')}
-                  className="px-3 py-1.5 rounded-lg hover:text-purple-600 hover:bg-slate-50 transition-colors cursor-pointer"
+                <Link
+                  href="/admin"
+                  className={`px-3 py-1.5 rounded-lg transition-colors ${
+                    pathname === '/admin' ? 'text-purple-600 bg-purple-50 font-bold' : 'hover:text-purple-600 hover:bg-slate-50'
+                  }`}
                 >
                   Dashboard
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePlaceholderClick('Products Management')}
-                  className="px-3 py-1.5 rounded-lg hover:text-purple-600 hover:bg-slate-50 transition-colors cursor-pointer"
+                </Link>
+                <Link
+                  href="/admin/products"
+                  className={`px-3 py-1.5 rounded-lg transition-colors ${
+                    pathname?.startsWith('/admin/products') ? 'text-purple-600 bg-purple-50 font-bold' : 'hover:text-purple-600 hover:bg-slate-50'
+                  }`}
                 >
                   Products
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePlaceholderClick('Inventory Control')}
-                  className="px-3 py-1.5 rounded-lg hover:text-purple-600 hover:bg-slate-50 transition-colors cursor-pointer"
+                </Link>
+                <Link
+                  href="/admin/inventory"
+                  className={`px-3 py-1.5 rounded-lg transition-colors ${
+                    pathname === '/admin/inventory' ? 'text-purple-600 bg-purple-50 font-bold' : 'hover:text-purple-600 hover:bg-slate-50'
+                  }`}
                 >
                   Inventory
-                </button>
+                </Link>
                 <button
                   type="button"
                   onClick={() => handlePlaceholderClick('Orders Management')}
@@ -254,36 +257,33 @@ export const Navbar = () => {
                 >
                   Overview
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    handlePlaceholderClick('Admin Dashboard');
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                <Link
+                  href="/admin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                    pathname === '/admin' ? 'text-purple-600 bg-purple-50 font-bold' : 'text-slate-700 hover:bg-slate-100'
+                  }`}
                 >
                   Dashboard
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    handlePlaceholderClick('Products Management');
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                </Link>
+                <Link
+                  href="/admin/products"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                    pathname?.startsWith('/admin/products') ? 'text-purple-600 bg-purple-50 font-bold' : 'text-slate-700 hover:bg-slate-100'
+                  }`}
                 >
                   Products
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    handlePlaceholderClick('Inventory Control');
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                </Link>
+                <Link
+                  href="/admin/inventory"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                    pathname === '/admin/inventory' ? 'text-purple-600 bg-purple-50 font-bold' : 'text-slate-700 hover:bg-slate-100'
+                  }`}
                 >
                   Inventory
-                </button>
+                </Link>
                 <button
                   type="button"
                   onClick={() => {
