@@ -420,7 +420,7 @@ function CheckoutContent() {
                 <Button
                   variant="primary"
                   disabled={isExpired}
-                  onClick={() => setPaymentModalOpen(true)}
+                  onClick={() => router.push(`/payment/${order._id}`)}
                   className={`w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 text-sm shadow-lg ${
                     isExpired
                       ? 'opacity-50 cursor-not-allowed bg-slate-300 text-slate-500 shadow-none'
