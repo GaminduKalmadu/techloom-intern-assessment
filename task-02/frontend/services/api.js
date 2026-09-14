@@ -23,6 +23,14 @@ async function request(endpoint, options = {}) {
     Accept: 'application/json',
   };
 
+  // Automatically attach JWT authorization token if available in client storage
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('token');
+    if (token && !options.headers?.Authorization && !options.headers?.authorization) {
+      defaultHeaders['Authorization'] = `Bearer ${token}`;
+    }
+  }
+
   const config = {
     ...options,
     headers: {

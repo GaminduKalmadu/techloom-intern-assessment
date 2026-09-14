@@ -1,11 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import PageContainer from '@/components/common/PageContainer';
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
 import Loading, { Skeleton } from '@/components/common/Loading';
 import healthService from '@/services/healthService';
+import authService from '@/services/authService';
+import { useAuth } from '@/context/AuthContext';
 import {
   CheckCircle2,
   XCircle,
@@ -13,19 +16,32 @@ import {
   Server,
   Layers,
   ShieldCheck,
+  ShieldAlert,
   Cpu,
   Database,
   Search,
   Code2,
   Zap,
+  User,
+  LogIn,
+  LogOut,
+  KeyRound,
+  Lock,
+  ArrowRight,
 } from 'lucide-react';
 
 export default function HomePage() {
+  const { user, isAuthenticated, isAdmin, isCustomer, logout } = useAuth();
+
   const [healthData, setHealthData] = useState(null);
   const [healthStatus, setHealthStatus] = useState('loading'); // 'loading' | 'success' | 'error'
   const [errorMessage, setErrorMessage] = useState('');
   const [latency, setLatency] = useState(null);
   const [lastChecked, setLastChecked] = useState(null);
+
+  // RBAC Permission Test states
+  const [rbacTestResult, setRbacTestResult] = useState(null);
+  const [isTestingRbac, setIsTestingRbac] = useState(false);
 
   // Showcase state for Input & Button components
   const [demoInput, setDemoInput] = useState('John Doe');
@@ -56,6 +72,54 @@ export default function HomePage() {
     fetchHealthStatus();
   }, []);
 
+  // Run test on GET /api/auth/me
+  const testGetMe = async () => {
+    setIsTestingRbac(true);
+    setRbacTestResult(null);
+    try {
+      const res = await authService.getMe();
+      setRbacTestResult({
+        endpoint: 'GET /api/auth/me',
+        status: 200,
+        success: true,
+        data: res,
+      });
+    } catch (err) {
+      setRbacTestResult({
+        endpoint: 'GET /api/auth/me',
+        status: err.status || 401,
+        success: false,
+        error: err.message,
+      });
+    } finally {
+      setIsTestingRbac(false);
+    }
+  };
+
+  // Run test on GET /api/auth/admin-check
+  const testAdminCheck = async () => {
+    setIsTestingRbac(true);
+    setRbacTestResult(null);
+    try {
+      const res = await authService.adminCheck();
+      setRbacTestResult({
+        endpoint: 'GET /api/auth/admin-check',
+        status: 200,
+        success: true,
+        data: res,
+      });
+    } catch (err) {
+      setRbacTestResult({
+        endpoint: 'GET /api/auth/admin-check',
+        status: err.status || (err.message.includes('403') ? 403 : 401),
+        success: false,
+        error: err.message,
+      });
+    } finally {
+      setIsTestingRbac(false);
+    }
+  };
+
   const handleSimulateAction = () => {
     setIsBtnLoading(true);
     setTimeout(() => {
@@ -70,7 +134,7 @@ export default function HomePage() {
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/80 text-blue-700 text-xs font-bold tracking-wide shadow-sm">
             <Zap className="w-3.5 h-3.5 text-blue-600" />
-            <span>Section 02 • Architecture & Configuration Foundation</span>
+            <span>Section 02 • Customer & Admin Authentication (RBAC)</span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
@@ -81,13 +145,198 @@ export default function HomePage() {
           </h1>
 
           <p className="text-slate-600 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
-            Clean base project structure initialized with Next.js App Router, Tailwind CSS, Express REST API,
-            and MongoDB Mongoose connection pooling.
+            Role-based authentication powered by bcrypt and JWT tokens. Full customer registration,
+            secure admin authorization, protected middlewares, and dynamic responsive navigation.
           </p>
         </div>
 
+        {/* AUTHENTICATION & ACTIVE SESSION CARD */}
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-6 sm:p-8 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+            <div className="flex items-center gap-3.5">
+              <div
+                className={`p-3 rounded-xl border ${
+                  isAdmin
+                    ? 'bg-purple-50 border-purple-100 text-purple-600'
+                    : isCustomer
+                    ? 'bg-blue-50 border-blue-100 text-blue-600'
+                    : 'bg-slate-50 border-slate-100 text-slate-600'
+                }`}
+              >
+                {isAdmin ? (
+                  <ShieldCheck className="w-6 h-6" />
+                ) : isCustomer ? (
+                  <User className="w-6 h-6" />
+                ) : (
+                  <KeyRound className="w-6 h-6" />
+                )}
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-slate-900">Active Authentication Session</h2>
+                <p className="text-xs text-slate-500">
+                  Current Session Status:{' '}
+                  <span className="font-semibold text-slate-700">
+                    {isAuthenticated
+                      ? `${user?.role} (${user?.email})`
+                      : 'Unauthenticated (Guest Visitor)'}
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              {isAuthenticated ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={logout}
+                  icon={LogOut}
+                  className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200"
+                >
+                  Sign Out
+                </Button>
+              ) : (
+                <>
+                  <Link href="/login">
+                    <Button variant="outline" size="sm" icon={LogIn}>
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link href="/register">
+                    <Button variant="primary" size="sm" icon={ArrowRight}>
+                      Create Account
+                    </Button>
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Session Overview Details */}
+          <div className="pt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex flex-col justify-between">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Account Role</span>
+              <div className="mt-2 flex items-center gap-2">
+                {isAdmin ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-100 text-purple-800 font-black text-xs">
+                    <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+                    ADMIN
+                  </span>
+                ) : isCustomer ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 font-black text-xs">
+                    <User className="w-3.5 h-3.5 text-blue-600" />
+                    CUSTOMER
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-200 text-slate-700 font-bold text-xs">
+                    GUEST
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex flex-col justify-between">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">User Identity</span>
+              <div className="mt-2 text-sm font-bold text-slate-800 truncate">
+                {user?.name || 'Anonymous Visitor'}
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex flex-col justify-between">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">JWT Storage</span>
+              <div className="mt-2 font-mono text-xs text-slate-600 truncate">
+                {isAuthenticated ? 'Active (Bearer token saved)' : 'No Token'}
+              </div>
+            </div>
+          </div>
+
+          {/* LIVE RBAC PERMISSION TEST ACTIONS */}
+          <div className="mt-6 pt-6 border-t border-slate-100 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                  Test Role-Based Protected Endpoints
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Verify how your current role interacts with `protect` and `requireAdmin` middlewares.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={testGetMe}
+                  isLoading={isTestingRbac}
+                >
+                  Test GET /api/auth/me
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={testAdminCheck}
+                  isLoading={isTestingRbac}
+                  icon={ShieldCheck}
+                >
+                  Test GET /api/auth/admin-check
+                </Button>
+              </div>
+            </div>
+
+            {/* Test Results Output */}
+            {rbacTestResult && (
+              <div
+                className={`p-4 rounded-xl border text-xs font-mono space-y-2 animate-in fade-in ${
+                  rbacTestResult.success
+                    ? 'bg-emerald-50/80 border-emerald-200 text-emerald-900'
+                    : rbacTestResult.status === 403
+                    ? 'bg-amber-50/80 border-amber-200 text-amber-900'
+                    : 'bg-rose-50/80 border-rose-200 text-rose-900'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold uppercase tracking-wider">
+                    {rbacTestResult.endpoint}
+                  </span>
+                  <span
+                    className={`px-2 py-0.5 rounded font-bold ${
+                      rbacTestResult.success
+                        ? 'bg-emerald-200 text-emerald-800'
+                        : rbacTestResult.status === 403
+                        ? 'bg-amber-200 text-amber-800'
+                        : 'bg-rose-200 text-rose-800'
+                    }`}
+                  >
+                    HTTP {rbacTestResult.status}
+                  </span>
+                </div>
+
+                <div className="text-[11px] font-sans">
+                  {rbacTestResult.success ? (
+                    <p className="text-emerald-700 font-semibold">
+                      ✔ Request succeeded! User authenticated and authorized for this route.
+                    </p>
+                  ) : rbacTestResult.status === 403 ? (
+                    <p className="text-amber-700 font-semibold">
+                      ✔ 403 Forbidden: Customer successfully blocked by `requireAdmin` middleware!
+                    </p>
+                  ) : (
+                    <p className="text-rose-700 font-semibold">
+                      ✖ Request rejected: {rbacTestResult.error}
+                    </p>
+                  )}
+                </div>
+
+                <pre className="p-3 bg-white/70 rounded-lg overflow-x-auto text-[11px] border border-black/5">
+                  {JSON.stringify(rbacTestResult.data || rbacTestResult.error, null, 2)}
+                </pre>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Backend Health Check Card */}
-        <div className="mt-8 bg-white border border-slate-200/80 rounded-2xl p-6 sm:p-8 shadow-sm transition-all hover:shadow-md">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-6 sm:p-8 shadow-sm transition-all hover:shadow-md">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
             <div className="flex items-center gap-3.5">
               <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl text-blue-600">
@@ -116,7 +365,6 @@ export default function HomePage() {
 
           {/* Health Status Display */}
           <div className="pt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Status tile */}
             <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex flex-col justify-between">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</span>
               <div className="mt-2 flex items-center gap-2">
@@ -139,7 +387,6 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Latency tile */}
             <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex flex-col justify-between">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Response Latency</span>
               <div className="mt-2 font-mono text-sm font-bold text-slate-800">
@@ -147,7 +394,6 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Timestamp tile */}
             <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex flex-col justify-between">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Last Ping</span>
               <div className="mt-2 font-mono text-xs font-medium text-slate-600">
@@ -156,7 +402,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* JSON Payload or Error Banner */}
           <div className="mt-6">
             <span className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
               API Response Payload:
@@ -175,89 +420,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* System Architecture Checklist */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-          {/* Backend Stack & Architecture */}
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
-                <Database className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-slate-900">Backend Configuration</h3>
-                <p className="text-xs text-slate-500">Node.js + Express + Mongoose</p>
-              </div>
-            </div>
-
-            <ul className="space-y-3 text-xs text-slate-600">
-              <li className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                <span>
-                  <strong>Database Connection:</strong> Configured with connection pooling, events & graceful disconnect in <code className="bg-slate-100 px-1 py-0.5 rounded">src/config/db.js</code>
-                </span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                <span>
-                  <strong>Security & Logging:</strong> Helmet, Morgan & CORS configured in <code className="bg-slate-100 px-1 py-0.5 rounded">src/app.js</code>
-                </span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                <span>
-                  <strong>Standardized Envelopes:</strong> <code className="bg-slate-100 px-1 py-0.5 rounded">ApiResponse</code> and <code className="bg-slate-100 px-1 py-0.5 rounded">ApiError</code> classes
-                </span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                <span>
-                  <strong>Modular Directory Tree:</strong> <code className="bg-slate-100 px-1 py-0.5 rounded">controllers/</code>, <code className="bg-slate-100 px-1 py-0.5 rounded">models/</code>, <code className="bg-slate-100 px-1 py-0.5 rounded">services/</code>, <code className="bg-slate-100 px-1 py-0.5 rounded">middleware/</code>, <code className="bg-slate-100 px-1 py-0.5 rounded">routes/</code>, <code className="bg-slate-100 px-1 py-0.5 rounded">jobs/</code>
-                </span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Frontend Stack & Primitives */}
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
-                <Cpu className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-slate-900">Frontend Foundation</h3>
-                <p className="text-xs text-slate-500">Next.js App Router + Tailwind CSS</p>
-              </div>
-            </div>
-
-            <ul className="space-y-3 text-xs text-slate-600">
-              <li className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-                <span>
-                  <strong>App Router:</strong> Built with Next.js JavaScript App Router architecture & responsive layout
-                </span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-                <span>
-                  <strong>API Client:</strong> Centralized client in <code className="bg-slate-100 px-1 py-0.5 rounded">services/api.js</code> with <code className="bg-slate-100 px-1 py-0.5 rounded">NEXT_PUBLIC_API_URL</code> configuration
-                </span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-                <span>
-                  <strong>Reusable Primitives:</strong> Standardized <code className="bg-slate-100 px-1 py-0.5 rounded">Button</code>, <code className="bg-slate-100 px-1 py-0.5 rounded">Input</code>, <code className="bg-slate-100 px-1 py-0.5 rounded">Loading</code>, and <code className="bg-slate-100 px-1 py-0.5 rounded">PageContainer</code>
-                </span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-                <span>
-                  <strong>Ready for Expansion:</strong> <code className="bg-slate-100 px-1 py-0.5 rounded">hooks/</code>, <code className="bg-slate-100 px-1 py-0.5 rounded">context/</code>, and <code className="bg-slate-100 px-1 py-0.5 rounded">utils/</code> ready for feature modules
-                </span>
-              </li>
-            </ul>
-          </div>
-        </div>
-
         {/* UI Components Interactive Showcase */}
         <div className="bg-white border border-slate-200/80 rounded-2xl p-6 sm:p-8 shadow-sm">
           <div className="flex items-center gap-3 mb-6">
@@ -273,7 +435,6 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-2">
-            {/* Input Component Showcase */}
             <div className="space-y-4">
               <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
                 Input Component (<code className="lowercase">components/common/Input.jsx</code>)
@@ -300,7 +461,6 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Button Component Showcase */}
             <div className="space-y-4">
               <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
                 Button Component Variants (<code className="lowercase">components/common/Button.jsx</code>)
@@ -330,17 +490,6 @@ export default function HomePage() {
                 >
                   {isBtnLoading ? 'Saving...' : 'Click to Load'}
                 </Button>
-              </div>
-
-              <div className="pt-2">
-                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-2">
-                  Loading Component
-                </span>
-                <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex items-center gap-4">
-                  <Loading size="sm" message="Inline spinner" />
-                  <div className="h-6 w-px bg-slate-200" />
-                  <Skeleton className="h-5 w-32" />
-                </div>
               </div>
             </div>
           </div>
