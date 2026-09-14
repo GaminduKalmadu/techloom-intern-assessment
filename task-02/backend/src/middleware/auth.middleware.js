@@ -57,7 +57,40 @@ const requireAdmin = (req, res, next) => {
   next();
 };
 
+/**
+ * Middleware to optionally authenticate user if token is provided
+ * Does not block request if token is missing or invalid
+ */
+const optionalAuth = async (req, res, next) => {
+  try {
+    let token;
+
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+
+    if (!token) {
+      req.user = null;
+      return next();
+    }
+
+    try {
+      const decoded = jwt.verify(token, env.JWT_SECRET);
+      const user = await User.findById(decoded.id);
+      req.user = user || null;
+    } catch {
+      req.user = null;
+    }
+
+    next();
+  } catch (error) {
+    req.user = null;
+    next();
+  }
+};
+
 module.exports = {
   protect,
   requireAdmin,
+  optionalAuth,
 };

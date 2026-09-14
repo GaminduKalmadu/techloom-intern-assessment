@@ -144,14 +144,14 @@ export const Navbar = () => {
                 >
                   Home
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => handlePlaceholderClick('Products Catalog')}
-                  className="px-3 py-1.5 rounded-lg hover:text-blue-600 hover:bg-slate-50 transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                <Link
+                  href="/#catalog"
+                  className={`px-3 py-1.5 rounded-lg transition-colors ${
+                    pathname?.startsWith('/products') ? 'text-blue-600 bg-blue-50 font-bold' : 'hover:text-blue-600 hover:bg-slate-50'
+                  }`}
                 >
                   Products
-                  <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.2 rounded font-normal">Next</span>
-                </button>
+                </Link>
                 <button
                   type="button"
                   onClick={() => handlePlaceholderClick('Shopping Cart')}
@@ -324,16 +324,13 @@ export const Navbar = () => {
                 >
                   Home
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    handlePlaceholderClick('Products Catalog');
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                <Link
+                  href="/#catalog"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100"
                 >
                   Products
-                </button>
+                </Link>
                 <button
                   type="button"
                   onClick={() => {
