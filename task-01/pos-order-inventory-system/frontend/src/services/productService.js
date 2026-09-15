@@ -69,3 +69,5 @@ export const seedSampleProducts = async (force = false) => {
     params: { force },
   });
 };
+
+export const seedProducts = seedSampleProducts;

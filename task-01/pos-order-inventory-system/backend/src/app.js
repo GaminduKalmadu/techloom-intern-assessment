@@ -71,9 +71,13 @@ app.get('/', (req, res) => {
 const productRoutes = require('./routes/product.routes');
 const cartRoutes = require('./routes/cart.routes');
 const orderRoutes = require('./routes/order.routes');
+const reportRoutes = require('./routes/report.routes');
+const settingRoutes = require('./routes/setting.routes');
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/settings', settingRoutes);
 app.use('/api/v1', apiRoutes);
 
 // 9. 404 Route Not Found Handler
