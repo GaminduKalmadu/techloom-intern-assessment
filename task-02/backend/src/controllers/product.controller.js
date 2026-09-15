@@ -268,7 +268,15 @@ const createProduct = async (req, res, next) => {
       throw ApiError.badRequest('Stock quantity must be a non-negative integer.');
     }
 
-    // 2. Create product (reservedQuantity is strictly initialized to 0, protected from admin input)
+    // 2. Image validation (enforce max 10 MB)
+    if (imageUrl && typeof imageUrl === 'string' && imageUrl.startsWith('data:image/')) {
+      const approximateBytes = (imageUrl.length * 3) / 4;
+      if (approximateBytes > 10 * 1024 * 1024) {
+        throw ApiError.badRequest('Image file size exceeds the maximum allowed limit of 10 MB.');
+      }
+    }
+
+    // 3. Create product (reservedQuantity is strictly initialized to 0, protected from admin input)
     const product = await Product.create({
       name: name.trim(),
       description: description ? description.trim() : '',
@@ -343,7 +351,14 @@ const updateProduct = async (req, res, next) => {
     }
 
     if (typeof imageUrl === 'string') {
-      product.imageUrl = imageUrl.trim();
+      const trimmedUrl = imageUrl.trim();
+      if (trimmedUrl.startsWith('data:image/')) {
+        const approximateBytes = (trimmedUrl.length * 3) / 4;
+        if (approximateBytes > 10 * 1024 * 1024) {
+          throw ApiError.badRequest('Image file size exceeds the maximum allowed limit of 10 MB.');
+        }
+      }
+      product.imageUrl = trimmedUrl;
     }
 
     if (typeof stockQuantity !== 'undefined') {

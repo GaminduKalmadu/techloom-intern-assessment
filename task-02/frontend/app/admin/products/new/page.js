@@ -7,6 +7,7 @@ import PageContainer from '@/components/common/PageContainer';
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
 import AdminGuard from '@/components/admin/AdminGuard';
+import ProductImageUpload from '@/components/admin/ProductImageUpload';
 import productService from '@/services/productService';
 import categoryService from '@/services/categoryService';
 import {
@@ -258,37 +259,15 @@ export default function AddProductPage() {
               />
             </div>
 
-            {/* Image URL */}
-            <div className="space-y-1.5">
-              <Input
-                id="imageUrl"
-                label="Image URL"
-                type="url"
-                icon={ImageIcon}
-                placeholder="https://images.unsplash.com/..."
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                helperText="Direct image link for catalog display"
-              />
-
-              {imageUrl && (
-                <div className="mt-2 p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-lg bg-white border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
-                    <img
-                      src={imageUrl}
-                      alt="Preview"
-                      className="h-full w-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
-                  </div>
-                  <span className="text-[11px] text-slate-500 font-mono truncate max-w-sm">
-                    {imageUrl}
-                  </span>
-                </div>
-              )}
-            </div>
+            {/* Product Image Section (Upload from Device max 10MB or Image URL) */}
+            <ProductImageUpload
+              imageUrl={imageUrl}
+              onChange={(val) => {
+                setImageUrl(val);
+                setErrorMessage('');
+              }}
+              onError={(err) => setErrorMessage(err)}
+            />
 
             {/* Active Status Switch */}
             <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
