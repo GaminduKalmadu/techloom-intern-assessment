@@ -13,12 +13,13 @@ const app = express();
 app.use(helmet());
 
 // 2. CORS Configuration using CLIENT_URL
-const allowedOrigins = [env.CLIENT_URL, 'http://localhost:3000'].filter(Boolean);
+const configuredOrigins = env.CLIENT_URL ? env.CLIENT_URL.split(',').map((o) => o.trim()) : [];
+const allowedOrigins = Array.from(new Set([...configuredOrigins, 'http://localhost:3000'].filter(Boolean)));
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, Postman) or matched origin
-      if (!origin || allowedOrigins.includes(origin)) {
+      // Allow requests with no origin (like mobile apps, curl, Postman) or wildcard or matched origin
+      if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
       return callback(new Error(`Origin ${origin} not allowed by CORS`));
