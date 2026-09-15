@@ -16,7 +16,8 @@
     "test:payment": "node scripts/test-payment.js",
     "test:orders": "node scripts/test-orders.js",
     "test:cancellation": "node scripts/test-cancellation-refund.js",
-    "test:admin": "node scripts/test-admin-monitoring.js"
+    "test:admin": "node scripts/test-admin-monitoring.js",
+    "test:image-upload": "node scripts/test-product-image-upload.js"
   },
   "keywords": [
     "ecommerce",
