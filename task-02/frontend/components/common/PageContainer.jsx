@@ -9,7 +9,7 @@ export const PageContainer = ({
 }) => {
   const maxWidthMap = {
     sm: 'max-w-3xl',
-    default: 'max-w-6xl',
+    default: 'max-w-7xl',
     lg: 'max-w-7xl',
     full: 'max-w-full',
   };

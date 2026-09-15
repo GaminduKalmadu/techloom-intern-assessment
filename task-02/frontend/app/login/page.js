@@ -14,8 +14,6 @@ import {
   EyeOff,
   LogIn,
   AlertCircle,
-  ShieldCheck,
-  User,
   ArrowRight,
 } from 'lucide-react';
 
@@ -64,14 +62,6 @@ export default function LoginPage() {
     }
   };
 
-  // Quick fill demo helper
-  const handleQuickFill = (demoEmail, demoPass) => {
-    setEmail(demoEmail);
-    setPassword(demoPass);
-    setFormError('');
-    clearError();
-  };
-
   return (
     <main className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6">
       <PageContainer size="sm">
@@ -85,7 +75,7 @@ export default function LoginPage() {
               Sign In to Your Account
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto">
-              Enter your credentials to access your customer orders or admin control panel.
+              Enter your credentials to access your customer cart, checkout, and order history.
             </p>
           </div>
 
@@ -160,45 +150,8 @@ export default function LoginPage() {
             </div>
           </form>
 
-          {/* Quick Fill Testing Helper Bar */}
-          <div className="mt-8 pt-6 border-t border-slate-100">
-            <span className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center mb-3">
-              One-Click Testing Accounts
-            </span>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <button
-                type="button"
-                onClick={() => handleQuickFill('admin@gmail.com', '123456')}
-                className="flex items-center gap-2 p-2.5 rounded-xl border border-purple-200 bg-purple-50/60 hover:bg-purple-100/60 text-purple-800 text-xs font-semibold transition-colors cursor-pointer text-left"
-              >
-                <div className="p-1.5 rounded-lg bg-purple-200 text-purple-700 shrink-0">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <span className="block font-bold">Admin Account</span>
-                  <span className="text-[10px] text-purple-600 font-normal">admin@gmail.com</span>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickFill('customer@example.com', 'Password123!')}
-                className="flex items-center gap-2 p-2.5 rounded-xl border border-blue-200 bg-blue-50/60 hover:bg-blue-100/60 text-blue-800 text-xs font-semibold transition-colors cursor-pointer text-left"
-              >
-                <div className="p-1.5 rounded-lg bg-blue-200 text-blue-700 shrink-0">
-                  <User className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <span className="block font-bold">Customer Demo</span>
-                  <span className="text-[10px] text-blue-600 font-normal">customer@example.com</span>
-                </div>
-              </button>
-            </div>
-          </div>
-
           {/* Footer Link */}
-          <p className="mt-6 text-center text-xs text-slate-500">
+          <p className="mt-8 pt-6 border-t border-slate-100 text-center text-xs text-slate-500">
             Don&apos;t have an account yet?{' '}
             <Link
               href="/register"

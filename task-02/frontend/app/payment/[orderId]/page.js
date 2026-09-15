@@ -18,7 +18,6 @@ import {
   Lock,
   RefreshCw,
   ShoppingBag,
-  Sparkles,
   ExternalLink,
   Info,
   XCircle,
@@ -39,10 +38,10 @@ export default function PaymentPage() {
   const [error, setError] = useState(null);
 
   // Card form state
-  const [cardholderName, setCardholderName] = useState('Jane Customer');
-  const [cardNumber, setCardNumber] = useState('4111 1111 1111 1111');
-  const [expiryDate, setExpiryDate] = useState('12/28');
-  const [cvv, setCvv] = useState('123');
+  const [cardholderName, setCardholderName] = useState('');
+  const [cardNumber, setCardNumber] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+  const [cvv, setCvv] = useState('');
 
   // Payment process state: 'IDLE' | 'PROCESSING' | 'SUCCESS' | 'FAILED' | 'TIMEOUT'
   const [paymentState, setPaymentState] = useState('IDLE');
@@ -169,13 +168,6 @@ export default function PaymentPage() {
     }
   };
 
-  // Preset Card Handlers
-  const fillPreset = (cardNum, name) => {
-    setCardNumber(cardNum);
-    setCardholderName(name);
-    setExpiryDate('12/28');
-    setCvv('123');
-  };
 
   // Handle Payment Submission
   const handlePayNow = async (e) => {
@@ -375,12 +367,11 @@ export default function PaymentPage() {
               variant="primary"
               onClick={() => {
                 setPaymentState('IDLE');
-                fillPreset('4111 1111 1111 1111', 'Jane Customer');
               }}
               className="w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2"
             >
               <RefreshCw className="w-4 h-4" />
-              Try Again with Success Card
+              Try Another Payment Card
             </Button>
             <Button
               variant="secondary"
@@ -495,60 +486,6 @@ export default function PaymentPage() {
           </div>
         </div>
 
-        {/* Sandbox Test Cards Preset Selector */}
-        <div className="p-4 sm:p-5 rounded-3xl bg-blue-50/70 border border-blue-100 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs font-black text-blue-950">
-              <Sparkles className="w-4 h-4 text-blue-600" />
-              <span>Assessment Test Cards (Click to auto-fill)</span>
-            </div>
-            <span className="text-[11px] text-blue-700 font-medium">PCI Safe Mock Rules</span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-            <button
-              type="button"
-              onClick={() => fillPreset('4111 1111 1111 1111', 'Jane Customer')}
-              className="p-3 rounded-2xl bg-white border border-emerald-200 hover:border-emerald-400 text-left transition-all shadow-sm group"
-            >
-              <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 mb-1">
-                ✔ SUCCESS
-              </span>
-              <p className="font-mono text-xs font-bold text-slate-900 group-hover:text-emerald-600">
-                4111 1111 1111 1111
-              </p>
-              <p className="text-[10px] text-slate-500 mt-0.5">Deducts stock & confirms</p>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => fillPreset('4000 0000 0000 0002', 'Declined User')}
-              className="p-3 rounded-2xl bg-white border border-rose-200 hover:border-rose-400 text-left transition-all shadow-sm group"
-            >
-              <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 mb-1">
-                ✘ FAILED
-              </span>
-              <p className="font-mono text-xs font-bold text-slate-900 group-hover:text-rose-600">
-                4000 0000 0000 0002
-              </p>
-              <p className="text-[10px] text-slate-500 mt-0.5">Releases reserved stock</p>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => fillPreset('4000 0000 0000 9995', 'Timeout User')}
-              className="p-3 rounded-2xl bg-white border border-amber-200 hover:border-amber-400 text-left transition-all shadow-sm group"
-            >
-              <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 mb-1">
-                ⏱ TIMEOUT
-              </span>
-              <p className="font-mono text-xs font-bold text-slate-900 group-hover:text-amber-600">
-                4000 0000 0000 9995
-              </p>
-              <p className="text-[10px] text-slate-500 mt-0.5">Expires order & hold</p>
-            </button>
-          </div>
-        </div>
 
         {/* Card Mockup Visual */}
         <div className="relative mx-auto max-w-sm rounded-3xl p-6 bg-gradient-to-tr from-slate-950 via-slate-900 to-indigo-950 text-white shadow-2xl border border-slate-800 space-y-6">

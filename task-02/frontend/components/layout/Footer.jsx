@@ -1,8 +1,17 @@
+'use client';
+
 import React from 'react';
+import { usePathname } from 'next/navigation';
 import PageContainer from '../common/PageContainer';
 import { ShieldCheck, Cpu, Database } from 'lucide-react';
 
 export const Footer = () => {
+  const pathname = usePathname();
+
+  // Do not render customer footer on admin portal pages
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
   return (
     <footer className="border-t border-slate-200/80 bg-white py-8 text-slate-500 text-xs">
       <PageContainer>
