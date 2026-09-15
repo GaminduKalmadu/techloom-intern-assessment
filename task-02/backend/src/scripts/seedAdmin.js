@@ -12,7 +12,7 @@ const seedAdmin = async () => {
     const adminEmail = env.ADMIN_EMAIL;
     const adminPassword = env.ADMIN_PASSWORD;
 
-    let admin = await User.findOne({ email: adminEmail });
+    let admin = await User.findOne({ email: adminEmail }).select('+passwordHash');
 
     if (!admin) {
       const salt = await bcrypt.genSalt(10);
@@ -27,11 +27,26 @@ const seedAdmin = async () => {
 
       console.log(`[Admin Seeder] Created default ADMIN account: ${adminEmail}`);
     } else {
+      let isModified = false;
+
       // Ensure existing account has ADMIN role
       if (admin.role !== 'ADMIN') {
         admin.role = 'ADMIN';
-        await admin.save();
+        isModified = true;
         console.log(`[Admin Seeder] Updated existing user ${adminEmail} to ADMIN role`);
+      }
+
+      // Ensure password matches ADMIN_PASSWORD (e.g. 123456)
+      const isPasswordValid = await admin.comparePassword(adminPassword);
+      if (!isPasswordValid) {
+        const salt = await bcrypt.genSalt(10);
+        admin.passwordHash = await bcrypt.hash(adminPassword, salt);
+        isModified = true;
+        console.log(`[Admin Seeder] Synchronized password for ${adminEmail}`);
+      }
+
+      if (isModified) {
+        await admin.save();
       } else {
         console.log(`[Admin Seeder] Verified existing ADMIN account: ${adminEmail}`);
       }

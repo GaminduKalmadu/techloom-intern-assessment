@@ -34,7 +34,7 @@ export const AdminGuard = ({ children }) => {
               You must be logged in as an administrator to access the Section 02 Admin Console.
             </p>
             <div className="pt-2 flex justify-center gap-3">
-              <Link href={`/login?redirect=${encodeURIComponent(pathname)}`}>
+              <Link href={`/admin/login?redirect=${encodeURIComponent(pathname)}`}>
                 <Button variant="primary" icon={LogIn}>
                   Sign In to Admin
                 </Button>
@@ -71,7 +71,7 @@ export const AdminGuard = ({ children }) => {
                   Back to Customer Home
                 </Button>
               </Link>
-              <Link href="/login">
+              <Link href="/admin/login">
                 <Button variant="primary" icon={LogIn}>
                   Switch to Admin Account
                 </Button>
