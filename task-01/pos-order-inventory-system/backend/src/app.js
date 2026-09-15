@@ -44,9 +44,9 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// 3. Request Body Parsers (with safe payload size limits)
-app.use(express.json({ limit: '5mb' }));
-app.use(express.urlencoded({ extended: true, limit: '5mb' }));
+// 3. Request Body Parsers (with safe payload size limits supporting device images up to 10MB)
+app.use(express.json({ limit: '15mb' }));
+app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
 // 4. Input Sanitization (NoSQL injection prevention & input trimming)
 app.use(sanitizeInput);
