@@ -32,7 +32,20 @@ const createProductValidation = [
     .withMessage('Description cannot exceed 1000 characters'),
   body('imageUrl')
     .optional()
-    .trim(),
+    .trim()
+    .custom((val) => {
+      if (!val) return true;
+      if (typeof val === 'string' && val.startsWith('data:image/')) {
+        // Calculate raw binary size from base64 representation
+        const base64Data = val.split(',')[1] || val;
+        const approximateBytes = (base64Data.length * 3) / 4;
+        const MAX_BYTES = 10 * 1024 * 1024; // 10MB
+        if (approximateBytes > MAX_BYTES) {
+          throw new Error('Image size cannot exceed 10MB');
+        }
+      }
+      return true;
+    }),
 ];
 
 const updateProductValidation = [
@@ -65,7 +78,19 @@ const updateProductValidation = [
     .isLength({ max: 1000 }),
   body('imageUrl')
     .optional()
-    .trim(),
+    .trim()
+    .custom((val) => {
+      if (!val) return true;
+      if (typeof val === 'string' && val.startsWith('data:image/')) {
+        const base64Data = val.split(',')[1] || val;
+        const approximateBytes = (base64Data.length * 3) / 4;
+        const MAX_BYTES = 10 * 1024 * 1024; // 10MB
+        if (approximateBytes > MAX_BYTES) {
+          throw new Error('Image size cannot exceed 10MB');
+        }
+      }
+      return true;
+    }),
 ];
 
 const adjustStockValidation = [
