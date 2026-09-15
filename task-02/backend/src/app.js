@@ -15,20 +15,34 @@ app.use(helmet());
 // 2. CORS Configuration using CLIENT_URL
 const configuredOrigins = env.CLIENT_URL ? env.CLIENT_URL.split(',').map((o) => o.trim()) : [];
 const allowedOrigins = Array.from(new Set([...configuredOrigins, 'http://localhost:3000'].filter(Boolean)));
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, Postman) or wildcard or matched origin
-      if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error(`Origin ${origin} not allowed by CORS`));
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  })
-);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, server-to-server)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    // Allow wildcard, explicit list, localhost, or any vercel.app preview/production deployment
+    const isAllowed =
+      allowedOrigins.includes('*') ||
+      allowedOrigins.includes(origin) ||
+      origin.includes('localhost') ||
+      origin.endsWith('.vercel.app');
+
+    if (isAllowed) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`Origin ${origin} not allowed by CORS`));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // 3. HTTP Request Logger
 if (env.isDevelopment) {
