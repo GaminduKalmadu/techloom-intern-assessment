@@ -29,7 +29,7 @@ const MobileNav = () => {
     },
     { name: 'Orders', href: '/orders', icon: Receipt },
     { name: 'Payments', href: '/admin/payments', icon: CreditCard },
-    { name: 'Reports', href: '/reports', icon: BarChart3, badge: 'Soon' },
+    { name: 'Reports', href: '/reports', icon: BarChart3 },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
 
